@@ -15,13 +15,9 @@ frontend/.env
 .pytest_cache
 .mypy_cache
 
-# IDE (you have .vscode, add its cousin)
 .idea
-
-# OS cruft (you have Mac, add Windows equivalent in case any collaborators use it)
 Thumbs.db
 
-# Any local db files if you use sqlite for the checkpointer later
 *.sqlite
 *.db
 *.sql
