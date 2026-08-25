@@ -1,0 +1,16 @@
+langchain
+langchain-openai
+langchain-community
+langchain-core
+fastapi
+uvicorn
+python-dotenv
+requests
+firebase-admin
+openai
+langgraph
+langgraph-checkpoint-postgres
+sqlalchemy
+psycopg2-binary
+pydantic
+python-dotenv
