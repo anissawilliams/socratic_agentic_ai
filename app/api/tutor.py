@@ -41,6 +41,8 @@ def _new_session_state(session_id: str) -> dict:
 async def send_message(req: TutorMessageRequest):
     state = _sessions.get(req.session_id) or _new_session_state(req.session_id)
     state["last_student_message"] = req.message
+    state["last_student_message"] = req.message
+    state["messages"] = state.get("messages", []) + [{"role": "user", "content": req.message}]
 
     result = tutor_graph.invoke(state)
     _sessions[req.session_id] = result
