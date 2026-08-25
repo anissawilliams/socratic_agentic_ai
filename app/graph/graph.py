@@ -13,18 +13,7 @@ from app.graph.nodes.generate_reflection_exit import generate_reflection_exit
 from app.graph.nodes.generate_aporia import generate_aporia
 
 def route_to_phase_node(state: dict) -> str:
-    if state["current_phase"] == "aporia":
-        return "generate_aporia"
-    elif state["current_phase"] == "elenchus":
-        return "generate_elenchus"
-    elif state["current_phase"] == "maieutics":
-        return "generate_maieutics"
-    elif state["current_phase"] == "dialectic":
-        return "generate_dialectic"
-    elif state["current_phase"] == "reflection_exit":
-        return "generate_reflection_exit"
-    else:
-        return "complete_session"
+    return state["current_phase"]
 
 
 def build_graph():
