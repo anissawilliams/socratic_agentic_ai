@@ -24,6 +24,7 @@ The current prototype separates the web application from the agentic tutoring wo
 
 ```mermaid
 flowchart LR
+
   learner [Learner]
   ui [React / Vite]
   api [FastAPI]
