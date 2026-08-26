@@ -32,9 +32,9 @@ flowchart LR
   content[PHASE_CONTENT]
 
   learner --> ui
-  ui -->|"GET /tutor/start\nPOST /tutor/message"| api
-  api -->|invoke| graph
-  graph --> content
+  ui -->|"GET /tutor/start\nPOST /tutor/message"|api
+  api -->|invoke|graph
+  graph -->content
 ```
 
 # Overview of the routing logic
