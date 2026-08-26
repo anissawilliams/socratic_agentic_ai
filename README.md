@@ -23,16 +23,17 @@ The current prototype separates the web application from the agentic tutoring wo
 
 ```mermaid
 flowchart LR
-  learner[Learner]
-  ui[React / Vite]
-  api[FastAPI]
-  graph[LangGraph]
-  content[PHASE_CONTENT]
+  learner [Learner]
+  ui [React / Vite]
+  api [FastAPI]
+  graph [LangGraph]
+  content [PHASE_CONTENT]
 
   learner --> ui
   ui -->|"GET /tutor/start\nPOST /tutor/message"| api
   api -->|invoke| graph
   graph --> content
+
 ```
 
 ```mermaid
@@ -56,13 +57,14 @@ Sessions start in **elenchus**. If the student hedges and attempts remain, the n
 
 ```mermaid
 flowchart TD
-    UI["<b>User Interface</b><br/>React · TypeScript · Axios"]
-    API["<b>REST API</b><br/>FastAPI"]
-    ORCH["<b>Agentic Orchestration</b><br/>LangGraph"]
-    LLM["<b>LLM Provider</b><br/>OpenAI"]
-    DB[("<b>Application Database</b><br/>Supabase · PostgreSQL")]
-    OTEL["<b>Telemetry</b><br/>OpenTelemetry"]
-    LS["<b>Tracing and Evaluation</b><br/>LangSmith Studio"]
+    flowchart TD
+    UI["User Interface\nReact · TypeScript · Axios"]
+    API["REST API\nFastAPI"]
+    ORCH["Agentic Orchestration\nLangGraph"]
+    LLM["LLM Provider\nOpenAI"]
+    DB["Application Database\nSupabase · PostgreSQL"]
+    OTEL["Telemetry\nOpenTelemetry"]
+    LS["Tracing and Evaluation\nLangSmith Studio"]
 
     UI <-->|HTTP requests and responses| API
     API <-->|Tutor state and actions| ORCH
@@ -72,6 +74,7 @@ flowchart TD
     API -.->|Metrics and traces| OTEL
     ORCH -.->|Metrics and traces| OTEL
     ORCH -.->|Workflow inspection| LS
+
 
     classDef interface fill:#e8f1ff,stroke:#2563eb,color:#111827,stroke-width:2px
     classDef service fill:#ecfdf5,stroke:#059669,color:#111827,stroke-width:2px
