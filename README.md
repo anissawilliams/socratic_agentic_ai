@@ -21,6 +21,7 @@ A key design principle is to keep the human learner at the center of the reasoni
 
 The current prototype separates the web application from the agentic tutoring workflow. Each student message is one LangGraph run. Phase generation is currently scripted from `PHASE_CONTENT` (LLM-backed nodes are planned, not wired).
 
+
 ```mermaid
 flowchart LR
   learner [Learner]
@@ -34,6 +35,7 @@ flowchart LR
   api -->|invoke| graph
   graph --> content
 ```
+
 
 ```mermaid
 flowchart TD
