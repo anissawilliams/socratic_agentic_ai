@@ -34,6 +34,7 @@ flowchart LR
   api -->|invoke| graph
   graph --> content
 
+
 ```
 
 ```mermaid
@@ -57,7 +58,6 @@ Sessions start in **elenchus**. If the student hedges and attempts remain, the n
 
 ```mermaid
 flowchart TD
-    flowchart TD
     UI["User Interface\nReact · TypeScript · Axios"]
     API["REST API\nFastAPI"]
     ORCH["Agentic Orchestration\nLangGraph"]
