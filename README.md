@@ -33,8 +33,6 @@ flowchart LR
   ui -->|"GET /tutor/start\nPOST /tutor/message"| api
   api -->|invoke| graph
   graph --> content
-
-
 ```
 
 ```mermaid
@@ -87,6 +85,7 @@ flowchart TD
     class ORCH,LLM intelligence
     class DB data
     class OTEL,LS observability
+```
     
 ### Socratic Phases
 
