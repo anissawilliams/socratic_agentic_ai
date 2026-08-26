@@ -24,17 +24,17 @@ The current prototype separates the web application from the agentic tutoring wo
 
 ```mermaid
 flowchart LR
-
-  learner[Learner]
-  ui[React / Vite]
-  api[FastAPI]
-  graph[LangGraph]
-  content[PHASE_CONTENT]
+  learner [Learner]
+  ui [React / Vite]
+  api [FastAPI]
+  graph [LangGraph]
+  content [PHASE_CONTENT]
 
   learner --> ui
-  ui -->|"GET /tutor/start\nPOST /tutor/message"|api
-  api -->|invoke|graph
-  graph -->content
+  ui -->|"GET /tutor/start\nPOST /tutor/message"| api
+  api -->|invoke| graph
+  graph --> content
+
 ```
 
 # Overview of the routing logic
