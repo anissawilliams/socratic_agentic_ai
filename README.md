@@ -54,6 +54,37 @@ flowchart TD
 
 Sessions start in **elenchus**. If the student hedges and attempts remain, the next turn stays in the same phase; otherwise the graph advances `elenchus → aporia → maieutics → dialectic → reflection_exit`. Staying in a phase is a later HTTP turn, not a back-edge in this graph. Session state is in-memory and is lost on restart.
 
+```mermaid
+flowchart TD
+    UI["<b>User Interface</b><br/>React · TypeScript · Axios"]
+    API["<b>REST API</b><br/>FastAPI"]
+    ORCH["<b>Agentic Orchestration</b><br/>LangGraph"]
+    LLM["<b>LLM Provider</b><br/>OpenAI"]
+    DB[("<b>Application Database</b><br/>Supabase · PostgreSQL")]
+    OTEL["<b>Telemetry</b><br/>OpenTelemetry"]
+    LS["<b>Tracing and Evaluation</b><br/>LangSmith Studio"]
+
+    UI <-->|HTTP requests and responses| API
+    API <-->|Tutor state and actions| ORCH
+    ORCH <-->|Prompts and responses| LLM
+    ORCH <-->|Session and learning data| DB
+
+    API -.->|Metrics and traces| OTEL
+    ORCH -.->|Metrics and traces| OTEL
+    ORCH -.->|Workflow inspection| LS
+
+    classDef interface fill:#e8f1ff,stroke:#2563eb,color:#111827,stroke-width:2px
+    classDef service fill:#ecfdf5,stroke:#059669,color:#111827,stroke-width:2px
+    classDef intelligence fill:#f5f3ff,stroke:#7c3aed,color:#111827,stroke-width:2px
+    classDef data fill:#fff7ed,stroke:#ea580c,color:#111827,stroke-width:2px
+    classDef observability fill:#f8fafc,stroke:#64748b,color:#111827,stroke-width:1.5px
+
+    class UI interface
+    class API service
+    class ORCH,LLM intelligence
+    class DB data
+    class OTEL,LS observability
+    
 ### Socratic Phases
 
 The prototype currently represents the tutoring flow using the following conceptual phases:
