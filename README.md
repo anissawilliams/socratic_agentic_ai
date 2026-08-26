@@ -19,31 +19,40 @@ A key design principle is to keep the human learner at the center of the reasoni
 
 ## Current Architecture
 
-The current prototype separates the web application from the agentic tutoring workflow:
+The current prototype separates the web application from the agentic tutoring workflow. Each student message is one LangGraph run. Phase generation is currently scripted from `PHASE_CONTENT` (LLM-backed nodes are planned, not wired).
 
-```text
-React / Vite frontend
-        |
-        v
-FastAPI backend
-        |
-        v
-LangGraph orchestration
-        |
-        +--> assess response
-        |
-        +--> decide next phase
-        |
-        +--> Socratic phase generator
-               |
-               +--> Aporia
-               +--> Elenchus
-               +--> Maieutics
-               +--> Dialectic
-               +--> Reflection / Exit
+```mermaid
+flowchart LR
+  learner[Learner]
+  ui[React / Vite]
+  api[FastAPI]
+  graph[LangGraph]
+  content[PHASE_CONTENT]
+
+  learner --> ui
+  ui -->|"GET /tutor/start\nPOST /tutor/message"| api
+  api -->|invoke| graph
+  graph --> content
 ```
 
-The graph currently uses deterministic routing to select the next Socratic phase. The phase-specific response generation is handled through LLM-backed nodes.
+```mermaid
+flowchart TD
+  START --> assess_response
+  assess_response --> decide_next_step
+  decide_next_step -->|elenchus| generate_elenchus
+  decide_next_step -->|aporia| generate_aporia
+  decide_next_step -->|maieutics| generate_maieutics
+  decide_next_step -->|dialectic| generate_dialectic
+  decide_next_step -->|reflection_exit| generate_reflection_exit
+  generate_elenchus --> END
+  generate_aporia --> END
+  generate_maieutics --> END
+  generate_dialectic --> END
+  generate_reflection_exit --> complete_session
+  complete_session --> END
+```
+
+Sessions start in **elenchus**. If the student hedges and attempts remain, the next turn stays in the same phase; otherwise the graph advances `elenchus → aporia → maieutics → dialectic → reflection_exit`. Staying in a phase is a later HTTP turn, not a back-edge in this graph. Session state is in-memory and is lost on restart.
 
 ### Socratic Phases
 
