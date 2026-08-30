@@ -3,6 +3,7 @@ from enum import Enum
 from langgraph.graph.message import add_messages
 from app.socratic.phases import SocraticPhase
 from app.models.evaluation import ResponseEvaluation
+from app.persistence.events import EventType
 
 
 class TutorCondition(str, Enum):
@@ -16,6 +17,7 @@ class TutorState(TypedDict):
     tutor_condition: TutorCondition | None
     current_phase: SocraticPhase | None
     previous_phase: SocraticPhase | None
+    pending_event: EventType | None
     phase_attempt_count: int
     last_student_message: str
     response_evaluation: ResponseEvaluation | None

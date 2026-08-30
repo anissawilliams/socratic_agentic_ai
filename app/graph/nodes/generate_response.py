@@ -15,10 +15,11 @@ def generate_response(state: TutorState) -> dict:
     line = lines[min(attempt_count, len(lines) - 1)]
 
     return {
-        "messages": [
-            {
-                "role": "assistant",
-                "content": line,
-            }
-        ]
-    }
+    "messages": [
+        {
+            "role": "assistant",
+            "content": line,
+        }
+    ],
+    "pending_event": "turn_completed",
+}
