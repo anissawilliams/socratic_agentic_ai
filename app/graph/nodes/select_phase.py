@@ -21,7 +21,7 @@ def select_phase(state: TutorState) -> dict:
     if current_phase is None:
         raise ValueError("Cannot select a phase when current_phase is None.")
 
-    evaluation = state["response_evaluation"]
+    evaluation = state["response_evaluation"]   
     hedging = evaluation["hedging_detected"]
     phase_attempt_count = state["phase_attempt_count"]
 
