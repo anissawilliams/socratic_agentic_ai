@@ -1,7 +1,7 @@
 from app.graph.graph import tutor_graph
 from app.graph.state import TutorCondition
 from app.socratic.phases import SocraticPhase
-
+from uuid import uuid4
 
 def run_case(name: str, state: dict):
     print(f"\n--- {name} ---")
@@ -19,7 +19,7 @@ def run_case(name: str, state: dict):
 
 
 base_state = {
-    "session_id": "test-session",
+    "session_id": str(uuid4()),
     "messages": [],
     "tutor_condition": TutorCondition.SOCRATIC,
     "previous_phase": None,
@@ -36,7 +36,7 @@ run_case(
     "hedging stays in elenchus",
     {
         **base_state,
-        "session_id": "test-1",
+        "session_id": str(uuid4()),
         "current_phase": SocraticPhase.ELENCHUS,
         "phase_attempt_count": 0,
         "last_student_message": "maybe",
@@ -49,7 +49,7 @@ run_case(
     "elenchus advances to aporia",
     {
         **base_state,
-        "session_id": "test-2",
+        "session_id": str(uuid4()),
         "current_phase": SocraticPhase.ELENCHUS,
         "phase_attempt_count": 0,
         "last_student_message":
@@ -63,7 +63,7 @@ run_case(
     "dialectic exits to reflection",
     {
         **base_state,
-        "session_id": "test-3",
+        "session_id": str(uuid4()),
         "current_phase": SocraticPhase.DIALECTIC,
         "previous_phase": SocraticPhase.MAIEUTICS,
         "phase_attempt_count": 0,
