@@ -6,11 +6,16 @@ from app.graph.nodes.select_phase import select_phase
 from app.graph.nodes.generate_response import generate_response
 from app.graph.nodes.generate_reflection import generate_reflection
 from app.graph.nodes.complete_session import complete_session
+from app.graph.nodes.log_turn import log_turn
 
 
 def build_graph():
     graph = StateGraph(TutorState)
 
+    graph.add_node(
+        "log_turn",
+        log_turn,
+    )
     graph.add_node(
         "evaluate",
         evaluate_student_response,
@@ -52,7 +57,12 @@ def build_graph():
     )
 
     graph.add_edge(
-        "generate_response",
+    "generate_response",
+    "log_turn",
+    )
+
+    graph.add_edge(
+        "log_turn",
         END,
     )
 
