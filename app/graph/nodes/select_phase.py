@@ -23,16 +23,16 @@ def select_phase(state: TutorState) -> dict:
 
     evaluation = state["response_evaluation"]
     hedging = evaluation["hedging_detected"]
-    attempt_count = state["phase_attempt_count"]
+    phase_attempt_count = state["phase_attempt_count"]
 
     should_stay = (
         hedging
-        and attempt_count < MAX_ATTEMPTS_PER_PHASE - 1
+        and phase_attempt_count < MAX_ATTEMPTS_PER_PHASE - 1
     )
 
     if should_stay:
         return {
-            "phase_attempt_count": attempt_count + 1,
+            "phase_attempt_count": phase_attempt_count + 1,
         }
 
     current_index = SOCRATIC_PHASE_ORDER.index(current_phase)

@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.graph.graph import tutor_graph
-from app.prompts.socratic import PHASE_CONTENT
+from app.socratic.prompts import PHASE_CONTENT
 router = APIRouter()
 
 # In-memory session store for now — no persistence yet, matches today's
@@ -19,7 +19,7 @@ class TutorMessageRequest(BaseModel):
 class TutorMessageResponse(BaseModel):
     message: str
     current_phase: str
-    attempt_count: int
+    phase_attempt_count: int
     is_complete: bool
 
 
@@ -28,7 +28,7 @@ def _new_session_state(session_id: str) -> dict:
         "session_id": session_id,
         "messages": [],
         "current_phase": "elenchus",
-        "attempt_count": 0,
+        "phase_attempt_count": 0,
         "last_student_message": "",
         "hedging_detected": False,
         "next_action": None,
@@ -50,7 +50,7 @@ async def send_message(req: TutorMessageRequest):
     return TutorMessageResponse(
         message=result["messages"][-1].content,
         current_phase=result["current_phase"],
-        attempt_count=result["attempt_count"],
+        phase_attempt_count=result["phase_attempt_count"],
         is_complete=result["is_complete"],
     )
 
@@ -65,6 +65,6 @@ async def start_session(session_id: str):
     return TutorMessageResponse(
         message=opening_line,
         current_phase=state["current_phase"],
-        attempt_count=state["attempt_count"],
+        phase_attempt_count=state["phase_attempt_count"],
         is_complete=state["is_complete"],
     )
