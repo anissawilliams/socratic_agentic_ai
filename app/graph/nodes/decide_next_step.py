@@ -9,13 +9,13 @@ def decide_next_step(state: dict) -> dict:
     to make any of these decisions themselves."""
     hedging = state.get("hedging_detected", False)
     current_phase = state["current_phase"]
-    attempt_count = state["attempt_count"]
+    phase_attempt_count = state["phase_attempt_count"]
 
     should_stay = hedging and attempt_count < MAX_ATTEMPTS_PER_PHASE - 1
 
     if should_stay:
         next_phase = current_phase
-        next_attempt = attempt_count + 1
+        next_attempt = phase_attempt_count + 1
     else:
         current_index = PHASE_ORDER.index(current_phase)
         is_last = current_index == len(PHASE_ORDER) - 1
@@ -24,6 +24,6 @@ def decide_next_step(state: dict) -> dict:
 
     return {
         "current_phase": next_phase,
-        "attempt_count": next_attempt,
+        "phase_attempt_count": next_attempt,
         "is_complete": next_phase == "reflection_exit",
     }
