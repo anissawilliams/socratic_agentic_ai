@@ -6,7 +6,6 @@ fastapi
 uvicorn
 python-dotenv
 requests
-firebase-admin
 openai
 langgraph
 langgraph-checkpoint-postgres
@@ -14,3 +13,4 @@ sqlalchemy
 psycopg2-binary
 pydantic
 python-dotenv
+supabase
