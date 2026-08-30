@@ -12,4 +12,5 @@ def complete_session(state: dict) -> dict:
     return {
         "is_complete": True,
         "completed_at": datetime.now(timezone.utc).isoformat(),
+        "pending_event": "session_completed",
     }

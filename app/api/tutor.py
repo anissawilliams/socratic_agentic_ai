@@ -1,70 +1,127 @@
-from fastapi import APIRouter
+from uuid import UUID, uuid4
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.graph.graph import tutor_graph
+from app.graph.state import TutorState, TutorCondition
+from app.socratic.phases import SocraticPhase
 from app.socratic.prompts import PHASE_CONTENT
+
+
 router = APIRouter()
 
-# In-memory session store for now — no persistence yet, matches today's
-# "no logging, just testing agentic pieces" scope. Sessions vanish on
-# server restart; that's fine until Firebase lands.
-_sessions: dict[str, dict] = {}
+
+# Temporary in-memory session store.
+# Persistent research/event logging is handled separately in Supabase.
+_sessions: dict[str, TutorState] = {}
 
 
 class TutorMessageRequest(BaseModel):
-    session_id: str
+    session_id: UUID
     message: str
 
 
 class TutorMessageResponse(BaseModel):
+    session_id: UUID
     message: str
-    current_phase: str
+    current_phase: str | None
     phase_attempt_count: int
     is_complete: bool
 
 
-def _new_session_state(session_id: str) -> dict:
+def _new_session_state(session_id: str) -> TutorState:
     return {
         "session_id": session_id,
         "messages": [],
-        "current_phase": "elenchus",
+        "tutor_condition": TutorCondition.SOCRATIC,
+
+        "current_phase": SocraticPhase.ELENCHUS,
+        "previous_phase": None,
+
         "phase_attempt_count": 0,
         "last_student_message": "",
-        "hedging_detected": False,
-        "next_action": None,
+
+        "response_evaluation": {
+            "hedging_detected": False,
+        },
+
+        "pending_event": None,
+
         "is_complete": False,
         "completed_at": None,
     }
 
 
-@router.post("/tutor/message", response_model=TutorMessageResponse)
-async def send_message(req: TutorMessageRequest):
-    state = _sessions.get(req.session_id) or _new_session_state(req.session_id)
-    state["last_student_message"] = req.message
-    state["last_student_message"] = req.message
-    state["messages"] = state.get("messages", []) + [{"role": "user", "content": req.message}]
+@router.get(
+    "/tutor/start",
+    response_model=TutorMessageResponse,
+)
+async def start_session():
+    session_id = uuid4()
+    session_key = str(session_id)
 
-    result = tutor_graph.invoke(state)
-    _sessions[req.session_id] = result
+    state = _new_session_state(session_key)
 
-    return TutorMessageResponse(
-        message=result["messages"][-1].content,
-        current_phase=result["current_phase"],
-        phase_attempt_count=result["phase_attempt_count"],
-        is_complete=result["is_complete"],
-    )
+    opening_line = PHASE_CONTENT[SocraticPhase.ELENCHUS][0]
 
-@router.get("/tutor/start", response_model=TutorMessageResponse)
-async def start_session(session_id: str):
-    state = _new_session_state(session_id)
-    opening_line = PHASE_CONTENT["elenchus"][0]
+    state["messages"] = [
+        {
+            "role": "assistant",
+            "content": opening_line,
+        }
+    ]
 
-    state["messages"] = [{"role": "assistant", "content": opening_line}]
-    _sessions[session_id] = state
+    _sessions[session_key] = state
 
     return TutorMessageResponse(
+        session_id=session_id,
         message=opening_line,
-        current_phase=state["current_phase"],
+        current_phase=state["current_phase"].value,
         phase_attempt_count=state["phase_attempt_count"],
         is_complete=state["is_complete"],
+    )
+
+
+@router.post(
+    "/tutor/message",
+    response_model=TutorMessageResponse,
+)
+async def send_message(req: TutorMessageRequest):
+    session_key = str(req.session_id)
+
+    state = _sessions.get(session_key)
+
+    if state is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Session not found. Start a new tutoring session.",
+        )
+
+    state["last_student_message"] = req.message
+
+    state["messages"] = [
+        *state.get("messages", []),
+        {
+            "role": "user",
+            "content": req.message,
+        },
+    ]
+
+    result = tutor_graph.invoke(state)
+
+    _sessions[session_key] = result
+
+    current_phase = result["current_phase"]
+
+    return TutorMessageResponse(
+        session_id=req.session_id,
+        message=result["messages"][-1].content,
+        current_phase=(
+            current_phase.value
+            if current_phase is not None
+            else None
+        ),
+        phase_attempt_count=result["phase_attempt_count"],
+        is_complete=result["is_complete"],
     )

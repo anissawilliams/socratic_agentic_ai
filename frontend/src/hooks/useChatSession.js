@@ -1,55 +1,106 @@
 import { useState } from "react";
-import { startSession as apiStartSession, sendMessage as apiSendMessage } from "../api/chatClient";
+import {
+  startSession as apiStartSession,
+  sendMessage as apiSendMessage,
+} from "../api/chatClient";
 
-function generateSessionId() {
-  return `session-${Date.now()}`;
-}
 
 export function useChatSession() {
-  const [sessionId, setSessionId] = useState(generateSessionId());
+  const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [phase, setPhase] = useState("elenchus");
-  const [attemptCount, setAttemptCount] = useState(0);
+  const [phase, setPhase] = useState(null);
+  const [phaseAttemptCount, setPhaseAttemptCount] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
 
-  const startSession = async (idOverride) => {
-    const id = idOverride || sessionId;
-    const data = await apiStartSession(id);
-    setMessages([{ role: "tutor", content: data.message }]);
-    setPhase(data.current_phase);
-    setAttemptCount(data.attempt_count);
-    setIsComplete(data.is_complete);
+
+  const startSession = async () => {
+    setIsWaiting(true);
+
+    try {
+      const data = await apiStartSession();
+
+      setSessionId(data.session_id);
+      setMessages([
+        {
+          role: "tutor",
+          content: data.message,
+        },
+      ]);
+      setPhase(data.current_phase);
+      setPhaseAttemptCount(data.phase_attempt_count);
+      setIsComplete(data.is_complete);
+    } finally {
+      setIsWaiting(false);
+    }
   };
 
+
   const sendMessage = async (text) => {
-    setMessages((prev) => [...prev, { role: "student", content: text }]);
+    if (!sessionId || isComplete) {
+      return;
+    }
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "student",
+        content: text,
+      },
+    ]);
+
     setIsWaiting(true);
+
     try {
       const data = await apiSendMessage(sessionId, text);
-      setMessages((prev) => [...prev, { role: "tutor", content: data.message }]);
-      setPhase(data.current_phase);
-      setAttemptCount(data.attempt_count);
-      setIsComplete(data.is_complete);
-    } catch (err) {
+
       setMessages((prev) => [
         ...prev,
-        { role: "tutor", content: "Something went wrong reaching the tutor. Try again?" },
+        {
+          role: "tutor",
+          content: data.message,
+        },
+      ]);
+
+      setPhase(data.current_phase);
+      setPhaseAttemptCount(data.phase_attempt_count);
+      setIsComplete(data.is_complete);
+    } catch (err) {
+      console.error("Tutor request failed:", err);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "tutor",
+          content: "Something went wrong reaching the tutor. Try again?",
+        },
       ]);
     } finally {
       setIsWaiting(false);
     }
   };
 
-  const resetSession = () => {
-    const newId = generateSessionId();
-    setSessionId(newId);
+
+  const resetSession = async () => {
+    setSessionId(null);
     setMessages([]);
-    setPhase("elenchus");
-    setAttemptCount(0);
+    setPhase(null);
+    setPhaseAttemptCount(0);
     setIsComplete(false);
-    startSession(newId); // pass the new id directly, don't rely on state having updated yet
+
+    await startSession();
   };
 
-  return { messages, phase, isWaiting, isComplete, sendMessage, resetSession, startSession };
+
+  return {
+    sessionId,
+    messages,
+    phase,
+    phaseAttemptCount,
+    isWaiting,
+    isComplete,
+    sendMessage,
+    resetSession,
+    startSession,
+  };
 }
