@@ -1,12 +1,11 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-export async function startSession(sessionId) {
-  const res = await axios.get(`${API_BASE}/tutor/start`, {
-    params: { session_id: sessionId },
-  });
-  return res.data;
+export async function startSession() {
+    const res = await axios.get(`${API_BASE}/tutor/start`);
+    return res.data;
 }
 
 export async function sendMessage(sessionId, message) {
@@ -14,5 +13,6 @@ export async function sendMessage(sessionId, message) {
     session_id: sessionId,
     message,
   });
+
   return res.data;
 }

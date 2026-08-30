@@ -7,10 +7,11 @@ def generate_reflection(state: TutorState) -> dict:
     reflection = REFLECTION_CONTENT[0]
 
     return {
-        "messages": [
-            {
-                "role": "assistant",
-                "content": reflection,
-            }
-        ]
-    }
+    "messages": [
+        {
+            "role": "assistant",
+            "content": reflection,
+        }
+    ],
+    "pending_event": "reflection_generated",
+}
