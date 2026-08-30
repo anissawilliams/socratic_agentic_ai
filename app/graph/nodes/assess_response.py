@@ -1,3 +1,4 @@
+# temporary assessment node - will be replaced with LLM-driven assessment
 HEDGE_WORDS = ["maybe", "i guess", "i don't know", "not sure", "i think so"]
 
 
