@@ -2,14 +2,11 @@ from typing import Annotated, TypedDict
 from enum import Enum
 from langgraph.graph.message import add_messages
 from app.socratic.phases import SocraticPhase
-
-
-class ResponseEvaluation(TypedDict):
-    hedging_detected: bool
+from app.models.evaluation import ResponseEvaluation
 
 
 class TutorCondition(str, Enum):
-    SOCRATIC = "socratic"
+    SOCRATIC = "socratic"   # Default
     SCAFFOLDED = "scaffolded"
     DIRECT_CHAT = "direct_chat"
 
