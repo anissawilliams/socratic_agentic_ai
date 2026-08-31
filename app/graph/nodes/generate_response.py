@@ -1,3 +1,5 @@
+from langchain_core.messages import AIMessage
+
 from app.socratic.prompts import PHASE_CONTENT
 from app.graph.state import TutorState
 
@@ -15,11 +17,6 @@ def generate_response(state: TutorState) -> dict:
     line = lines[min(attempt_count, len(lines) - 1)]
 
     return {
-    "messages": [
-        {
-            "role": "assistant",
-            "content": line,
-        }
-    ],
-    "pending_event": "turn_completed",
-}
+        "messages": [AIMessage(content=line)],
+        "pending_event": "turn_completed",
+    }
