@@ -1,6 +1,7 @@
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException
+from langchain_core.messages import AIMessage, HumanMessage
 from pydantic import BaseModel
 
 from app.graph.graph import tutor_graph
@@ -63,12 +64,7 @@ async def start_session():
     state["current_turn_id"] = turn_key
     opening_line = PHASE_CONTENT[SocraticPhase.ELENCHUS][0]
 
-    state["messages"] = [
-        {
-            "role": "assistant",
-            "content": opening_line,
-        }
-    ]
+    state["messages"] = [AIMessage(content=opening_line)]
 
     _sessions[session_key] = state
 
@@ -103,10 +99,7 @@ async def send_message(req: TutorMessageRequest):
 
     state["messages"] = [
         *state.get("messages", []),
-        {
-            "role": "user",
-            "content": req.message,
-        },
+        HumanMessage(content=req.message),
     ]
 
     result = tutor_graph.invoke(state)
