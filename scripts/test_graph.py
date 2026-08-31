@@ -1,8 +1,11 @@
 from dotenv import load_dotenv
 load_dotenv()
+from langchain_core.messages import AIMessage, HumanMessage
+
 from app.graph.graph import tutor_graph
 from app.graph.state import TutorCondition
 from app.socratic.phases import SocraticPhase
+from app.socratic.prompts import PHASE_CONTENT
 
 from uuid import uuid4
 
@@ -43,6 +46,10 @@ run_case(
         "current_phase": SocraticPhase.ELENCHUS,
         "phase_attempt_count": 0,
         "last_student_message": "maybe",
+        "messages": [
+            AIMessage(content=PHASE_CONTENT[SocraticPhase.ELENCHUS][0]),
+            HumanMessage(content="maybe"),
+        ],
     },
 )
 
