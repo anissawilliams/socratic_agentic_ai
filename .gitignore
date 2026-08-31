@@ -14,10 +14,10 @@ frontend/.env
 *.egg-info
 .pytest_cache
 .mypy_cache
-
 .idea
 Thumbs.db
 
 *.sqlite
 *.db
 *.sql
+.langgraph_api/

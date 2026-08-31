@@ -2,27 +2,20 @@
 
 ## Current checkpoint
 
-The core tutor workflow has been successfully refactored and tested.
+The core tutor workflow has been successfully refactored, tested, and
+instrumented with turn-level research logging.
 
 Current graph flow:
 
-START
-→ evaluate_response
-→ select_phase
-→ generate_response
-→ log_event
-→ END
+START → evaluate_response → select_phase → generate_response → log_event → END
 
 Reflection/completion path:
 
-select_phase
-→ generate_reflection
-→ log_event
-→ complete_session
-→ log_event
-→ END
+select_phase → generate_reflection → log_event
+             → complete_session → log_event → END
 
 Confirmed working:
+
 - `TutorState` refactor
 - `SocraticPhase`
 - `ResponseEvaluation` model
@@ -33,18 +26,40 @@ Confirmed working:
 - unified `log_event` implementation
 - Supabase `tutor_events` JSONB persistence
 - backend-generated UUID session IDs
+- backend-generated UUID turn IDs
+- `current_turn_id` carried in tutor state
+- student messages persisted in research events
+- tutor responses persisted in research events
+- current/previous phase persisted
+- response evaluation persisted
 - frontend no longer owns phase logic
 - live React → FastAPI → LangGraph → Supabase path verified
+- turn-level Elenchus → Aporia transition verified in Supabase
+
+Example persisted research event now contains:
+
+- `current_phase`
+- `previous_phase`
+- `student_message`
+- `tutor_response`
+- `tutor_condition`
+- `phase_attempt_count`
+- `response_evaluation`
+- session/turn identifiers
 
 Current response evaluation remains heuristic:
+
 - short responses and hedge terms are treated as hedging
 - richer `ResponseEvaluation` fields exist but are not populated yet
 
 Current tutor responses remain deterministic via `PHASE_CONTENT`.
-
 ---
 
+
+
 ## Start here next session
+
+
 
 ### 1. Clean up and checkpoint current logging
 
@@ -69,6 +84,8 @@ Verify the reflection and session-complete paths also write events.
 
 ---
 
+
+
 ### 2. Add LangSmith / LangGraph Studio
 
 Goal: add development tracing without replacing Supabase research logging.
@@ -90,6 +107,8 @@ Do not redesign the graph for LangSmith.
 
 ---
 
+
+
 ### 3. Build the Socratic agent layer
 
 Keep the current architecture:
@@ -101,12 +120,14 @@ SocraticPhase = selected pedagogical mode
 Create:
 
 app/socratic/agents/
+
 - elenchus.py
 - aporia.py
 - maieutics.py
 - dialectic.py
 
 Each agent should:
+
 - have a literature-grounded system prompt
 - receive conversation/state context
 - call the shared LLM service
@@ -118,6 +139,8 @@ Do NOT create four phase-specific LangGraph nodes again.
 
 ---
 
+
+
 ### 4. Create shared LLM service + config
 
 Move proven LLM setup from `test_llm.py` into:
@@ -126,6 +149,7 @@ Move proven LLM setup from `test_llm.py` into:
 - `app/services/llm.py`
 
 Centralize:
+
 - model
 - temperature
 - prompt/version metadata
@@ -134,6 +158,8 @@ Centralize:
 Do not instantiate a new OpenAI/ChatOpenAI client inside each agent.
 
 ---
+
+
 
 ### 5. Replace deterministic `PHASE_CONTENT`
 
@@ -145,6 +171,7 @@ Once one agent is wired successfully:
 - verify Supabase logging still works
 
 Then implement:
+
 - Aporia
 - Maieutics
 - Dialectic
@@ -154,6 +181,8 @@ After all four work, remove deterministic `PHASE_CONTENT` generation from the ac
 Keep scripted content only if useful for tests/fixtures.
 
 ---
+
+
 
 ### 6. Upgrade `ResponseEvaluation`
 
@@ -172,6 +201,7 @@ Next goal:
 use structured LLM evaluation to populate the richer model.
 
 Important:
+
 - `minimal` is not the same as `hedging`
 - `"I agree."` should likely be `minimal`, not uncertain
 - evaluation should eventually drive phase selection more intelligently
@@ -179,6 +209,8 @@ Important:
 Do not change routing behavior until structured evaluation is tested independently.
 
 ---
+
+
 
 ## Architectural rules to preserve
 
@@ -195,6 +227,8 @@ Do not change routing behavior until structured evaluation is tested independent
 
 ---
 
+
+
 ## Likely next commit sequence
 
 1. `complete unified tutor event logging`
@@ -203,3 +237,4 @@ Do not change routing behavior until structured evaluation is tested independent
 4. `add Elenchus LLM agent`
 5. `add remaining Socratic agents`
 6. `add structured response evaluation`
+

@@ -1,0 +1,7 @@
+{
+    "dependencies": ["."],
+    "graphs": {
+      "socratic_tutor": "./app/graph/graph.py:tutor_graph"
+    },
+    "env": ".env"
+  }

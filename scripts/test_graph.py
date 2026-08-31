@@ -1,6 +1,9 @@
+from dotenv import load_dotenv
+load_dotenv()
 from app.graph.graph import tutor_graph
 from app.graph.state import TutorCondition
 from app.socratic.phases import SocraticPhase
+
 from uuid import uuid4
 
 def run_case(name: str, state: dict):
