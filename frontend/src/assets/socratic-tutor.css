@@ -1,0 +1,208 @@
+/* =========================================================
+   SOCRATIC TUTOR — tutor identity styles
+   Drop this into your app stylesheet.
+   Assumes /assets/socrates-avatar.png is available publicly.
+   ========================================================= */
+
+:root {
+  --socratic-navy: #14395b;
+  --socratic-blue: #79bfe8;
+  --socratic-blue-soft: #eaf6fd;
+  --socratic-border: #d8e9f3;
+  --socratic-ink: #243342;
+  --socratic-muted: #718096;
+  --socratic-surface: #ffffff;
+  --socratic-shadow: 0 6px 18px rgba(20, 57, 91, 0.10);
+}
+
+/* ---------- Header / tutor identity ---------- */
+
+.tutor-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tutor-brand__avatar {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+  background: var(--socratic-blue-soft);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(20, 57, 91, 0.16);
+}
+
+.tutor-brand__text {
+  min-width: 0;
+}
+
+.tutor-brand__name {
+  margin: 0;
+  color: var(--socratic-navy);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.tutor-brand__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  color: var(--socratic-muted);
+  font-size: 0.78rem;
+}
+
+.tutor-brand__status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: #3dbb74;
+  box-shadow: 0 0 0 3px rgba(61, 187, 116, 0.12);
+}
+
+/* ---------- Assistant messages ---------- */
+
+.chat-message--assistant {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.chat-message--assistant .tutor-avatar {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+  background: var(--socratic-blue-soft);
+  border: 1px solid var(--socratic-border);
+}
+
+.chat-message--assistant .message-bubble {
+  max-width: min(76%, 680px);
+  padding: 12px 15px;
+  color: var(--socratic-ink);
+  background: #f5f8fa;
+  border: 1px solid #edf1f4;
+  border-radius: 8px 18px 18px 18px;
+  line-height: 1.5;
+}
+
+/* Optional: slightly emphasize the tutor's actual question */
+.chat-message--assistant .message-question {
+  margin-top: 8px;
+  color: var(--socratic-navy);
+  font-weight: 650;
+}
+
+/* ---------- Typing indicator ---------- */
+
+.tutor-typing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.tutor-typing .tutor-avatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 50%;
+  border: 1px solid var(--socratic-border);
+}
+
+.tutor-typing__bubble {
+  padding: 8px 12px;
+  color: var(--socratic-muted);
+  background: #f5f8fa;
+  border-radius: 8px 16px 16px 16px;
+  font-size: 0.82rem;
+}
+
+/* ---------- Welcome / empty conversation state ---------- */
+
+.tutor-welcome {
+  width: min(560px, 92%);
+  margin: 36px auto 28px;
+  padding: 28px 24px;
+  text-align: center;
+  background: var(--socratic-surface);
+  border: 1px solid var(--socratic-border);
+  border-radius: 20px;
+  box-shadow: var(--socratic-shadow);
+}
+
+.tutor-welcome__avatar {
+  width: 88px;
+  height: 88px;
+  display: block;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--socratic-blue-soft);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 14px rgba(20, 57, 91, 0.14);
+}
+
+.tutor-welcome__title {
+  margin: 0 0 7px;
+  color: var(--socratic-navy);
+  font-size: 1.35rem;
+  font-weight: 750;
+}
+
+.tutor-welcome__copy {
+  margin: 0 auto;
+  max-width: 430px;
+  color: var(--socratic-muted);
+  line-height: 1.55;
+}
+
+/* ---------- Small-screen tuning ---------- */
+
+@media (max-width: 640px) {
+  .tutor-brand__avatar {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .chat-message--assistant .tutor-avatar {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  .chat-message--assistant .message-bubble {
+    max-width: calc(100% - 48px);
+  }
+
+  .tutor-welcome {
+    margin-top: 20px;
+    padding: 22px 18px;
+  }
+
+  .tutor-welcome__avatar {
+    width: 74px;
+    height: 74px;
+  }
+}
+
+/* ---------- Accessibility ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .tutor-brand__avatar,
+  .tutor-avatar,
+  .tutor-welcome__avatar {
+    transition: none !important;
+  }
+}
