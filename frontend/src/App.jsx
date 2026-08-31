@@ -6,6 +6,8 @@ import PhaseIndicator from "./components/PhaseIndicator";
 import { useChatSession } from "./hooks/useChatSession";
 
 import "./App.css";
+import "./assets/socratic-tutor.css";
+import socratesAvatar from "./assets/socrates-avatar.png";
 
 
 function App() {
@@ -33,8 +35,25 @@ function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <h1>Socratic Tutor</h1>
-        <button onClick={resetSession}>
+        <div className="tutor-brand">
+          <img
+            src={socratesAvatar}
+            alt=""
+            className="tutor-brand__avatar"
+          />
+
+          <div className="tutor-brand__text">
+            <h1 className="tutor-brand__name">Socratic Tutor</h1>
+            <span className="tutor-brand__status">
+              Ready to explore
+            </span>
+          </div>
+        </div>
+
+        <button
+          className="new-session-button"
+          onClick={resetSession}
+        >
           New session
         </button>
       </header>

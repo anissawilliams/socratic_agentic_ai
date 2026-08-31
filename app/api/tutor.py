@@ -11,9 +11,6 @@ from app.socratic.prompts import PHASE_CONTENT
 
 router = APIRouter()
 
-
-# Temporary in-memory session store.
-# Persistent research/event logging is handled separately in Supabase.
 _sessions: dict[str, TutorState] = {}
 
 
@@ -24,6 +21,7 @@ class TutorMessageRequest(BaseModel):
 
 class TutorMessageResponse(BaseModel):
     session_id: UUID
+    current_turn_id: UUID | None
     message: str
     current_phase: str | None
     phase_attempt_count: int
@@ -35,10 +33,9 @@ def _new_session_state(session_id: str) -> TutorState:
         "session_id": session_id,
         "messages": [],
         "tutor_condition": TutorCondition.SOCRATIC,
-
+        "current_turn_id": None,
         "current_phase": SocraticPhase.ELENCHUS,
         "previous_phase": None,
-
         "phase_attempt_count": 0,
         "last_student_message": "",
 
@@ -59,10 +56,11 @@ def _new_session_state(session_id: str) -> TutorState:
 )
 async def start_session():
     session_id = uuid4()
+    turn_id = uuid4()
     session_key = str(session_id)
-
+    turn_key = str(turn_id)
     state = _new_session_state(session_key)
-
+    state["current_turn_id"] = turn_key
     opening_line = PHASE_CONTENT[SocraticPhase.ELENCHUS][0]
 
     state["messages"] = [
@@ -78,6 +76,7 @@ async def start_session():
         session_id=session_id,
         message=opening_line,
         current_phase=state["current_phase"].value,
+        current_turn_id=state["current_turn_id"],
         phase_attempt_count=state["phase_attempt_count"],
         is_complete=state["is_complete"],
     )
@@ -89,7 +88,9 @@ async def start_session():
 )
 async def send_message(req: TutorMessageRequest):
     session_key = str(req.session_id)
-
+    turn_id = uuid4()
+    turn_key = str(turn_id)
+    
     state = _sessions.get(session_key)
 
     if state is None:
@@ -97,7 +98,7 @@ async def send_message(req: TutorMessageRequest):
             status_code=404,
             detail="Session not found. Start a new tutoring session.",
         )
-
+    state["current_turn_id"] = turn_key
     state["last_student_message"] = req.message
 
     state["messages"] = [
@@ -116,6 +117,7 @@ async def send_message(req: TutorMessageRequest):
 
     return TutorMessageResponse(
         session_id=req.session_id,
+        current_turn_id=turn_id,
         message=result["messages"][-1].content,
         current_phase=(
             current_phase.value

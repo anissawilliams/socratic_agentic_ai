@@ -19,6 +19,7 @@ class TutorState(TypedDict):
     previous_phase: SocraticPhase | None
     pending_event: EventType | None
     phase_attempt_count: int
+    current_turn_id: str | None
     last_student_message: str
     response_evaluation: ResponseEvaluation | None
     next_action: str | None
