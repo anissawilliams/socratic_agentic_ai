@@ -6,6 +6,8 @@ This repository is an experimental second-generation implementation of an earlie
 
 > **Status:** Active research prototype. The architecture, prompts, instrumentation, persistence layer, and experimental design are still evolving and should not be considered production-ready.
 
+
+
 ## Research Goal
 
 The project investigates whether an AI tutoring system grounded in the Socratic method can encourage learners to question assumptions, examine contradictions, refine arguments, and reflect on their own reasoning rather than simply receive answers from an LLM.
@@ -40,6 +42,10 @@ graph LR;
     content -->|"temporary scripted response"| graphNode;
 ```
 
+
+
+
+
 ### Current Routing Logic
 
 ```mermaid
@@ -52,6 +58,8 @@ flowchart TD
     generate_reflection --> complete_session
     complete_session --> END
 ```
+
+
 
 The routing model intentionally separates four concerns:
 
@@ -141,6 +149,8 @@ flowchart TD
     GENERATE -.-> LS
 ```
 
+
+
 The key architectural distinction is:
 
 - **LangGraph nodes** represent workflow operations and state transitions.
@@ -148,16 +158,44 @@ The key architectural distinction is:
 - **Socratic agents** represent conceptually distinct LLM behaviors.
 - **Tools and services** provide reusable capabilities and infrastructure without becoming additional agents.
 
+## Socratic routing model
+
+The current implementation uses a temporary linear routing policy in
+`select_phase`: remain in the current phase or advance through a fixed
+`PHASE_ORDER`.
+
+This is an implementation scaffold, not the intended pedagogical model.
+
+Elenchus, Aporia, Maieutics, and Dialectic are treated as complementary
+Socratic modes rather than mandatory ordinal stages. Phase numbers are
+used for organization, logging, and analysis; they should not determine
+routing semantics.
+
+The target architecture is non-linear and learner-state-driven:
+
+- the router selects the pedagogical mode most appropriate to the
+  learner's current reasoning state;
+- the system may remain in a mode, revisit an earlier mode, skip a mode,
+  or move toward synthesis/reflection when appropriate;
+- Socratic agents perform their assigned pedagogical function but do not
+  control progression.
+
+Non-linear routing is intentionally deferred until structured
+`ResponseEvaluation` is validated, so routing decisions can be grounded
+in richer evidence than the current heuristic `hedging_detected` signal.
+
 ### Socratic Phases
 
 The Socratic domain currently models four conceptual phases:
 
-| Phase | Purpose |
-| --- | --- |
-| **Elenchus** | Probe claims and test them for contradictions or unsupported assumptions. |
-| **Aporia** | Surface uncertainty, contradiction, or gaps in the learner's current reasoning. |
-| **Maieutics** | Help the learner develop and articulate ideas through guided questioning. |
+
+| Phase         | Purpose                                                                              |
+| ------------- | ------------------------------------------------------------------------------------ |
+| **Elenchus**  | Probe claims and test them for contradictions or unsupported assumptions.            |
+| **Aporia**    | Surface uncertainty, contradiction, or gaps in the learner's current reasoning.      |
+| **Maieutics** | Help the learner develop and articulate ideas through guided questioning.            |
 | **Dialectic** | Examine alternative perspectives and refine the learner's argument through dialogue. |
+
 
 **Reflection / Exit is not modeled as a Socratic phase.** It is a post-Socratic workflow step used to consolidate the learner's reasoning and close the session.
 
@@ -178,7 +216,13 @@ The four agents are therefore not separate LangGraph nodes. The graph's `generat
 
 This keeps the experimental architecture interpretable and avoids creating agents for ordinary orchestration or utility functions.
 
+
+
+
+
 ## Technology Stack
+
+
 
 ### Backend
 
@@ -190,11 +234,15 @@ This keeps the experimental architecture interpretable and avoids creating agent
 - Pydantic
 - Supabase / PostgreSQL planned for persistence and preliminary JSONB research logging
 
+
+
 ### Frontend
 
 - React
 - Vite
 - JavaScript
+
+
 
 ### Infrastructure / Observability Under Evaluation
 
@@ -244,6 +292,8 @@ As LLM-backed agents are implemented, the Socratic domain is expected to add an 
 
 ## Getting Started
 
+
+
 ### Prerequisites
 
 Install:
@@ -261,6 +311,8 @@ git clone https://github.com/anissawilliams/socratic_agentic_ai.git
 cd socratic_agentic_ai
 ```
 
+
+
 ### 2. Create a Python virtual environment
 
 ```bash
@@ -274,11 +326,15 @@ On Windows:
 .venv\Scripts\activate
 ```
 
+
+
 ### 3. Install backend dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
+
+
 
 ### 4. Configure environment variables
 
@@ -316,6 +372,8 @@ Interactive API documentation is typically available at:
 http://localhost:8000/docs
 ```
 
+
+
 ### 6. Start the frontend
 
 In a second terminal:
@@ -332,23 +390,20 @@ Vite will print the local frontend URL when the development server starts.
 
 The implementation is intentionally being kept flexible while the research design is finalized. Near-term priorities include:
 
-1. **Ground Socratic behavior in literature**  
-   Define canonical behavior, instructions, and boundaries for each Socratic phase using published research.
+1. **Ground Socratic behavior in literature**
+  Define canonical behavior, instructions, and boundaries for each Socratic phase using published research.
+2. **Implement the Socratic agent layer**
+  Add the four LLM-backed Socratic agents while preserving the separation between pedagogical behavior and LangGraph orchestration.
+3. **Define and implement the research logging contract**
+  Add preliminary JSONB event logging and determine which interaction, routing, model, prompt, and timing fields must be captured for later analysis.
+4. **Instrument learner interaction**
+  Candidate measures include complete conversation logs, timestamps, user response/pondering time, input length, and other interaction-level metrics needed for later analysis.
+5. **Evaluate observability options**
+  Compare general tracing approaches such as OpenTelemetry with LLM-focused platforms such as Langfuse and LangSmith.
+6. **Prepare for experimental deployment**
+  Harden persistence, hosting, monitoring, and recovery behavior before data collection begins.
 
-2. **Implement the Socratic agent layer**  
-   Add the four LLM-backed Socratic agents while preserving the separation between pedagogical behavior and LangGraph orchestration.
 
-3. **Define and implement the research logging contract**  
-   Add preliminary JSONB event logging and determine which interaction, routing, model, prompt, and timing fields must be captured for later analysis.
-
-4. **Instrument learner interaction**  
-   Candidate measures include complete conversation logs, timestamps, user response/pondering time, input length, and other interaction-level metrics needed for later analysis.
-
-5. **Evaluate observability options**  
-   Compare general tracing approaches such as OpenTelemetry with LLM-focused platforms such as Langfuse and LangSmith.
-
-6. **Prepare for experimental deployment**  
-   Harden persistence, hosting, monitoring, and recovery behavior before data collection begins.
 
 ## Research Data and Evaluation
 
@@ -380,11 +435,13 @@ The current implementation:
 - may contain provisional prompts, routing logic, schemas, or persistence code; and
 - should not be used to draw research conclusions until the study design and implementation are finalized.
 
+
+
 ## Prior Work
 
 This repository builds on an earlier Socratic chatbot implementation:
 
-https://github.com/noghte/socratic_chatbot/
+[https://github.com/noghte/socratic_chatbot/](https://github.com/noghte/socratic_chatbot/)
 
 The current work is exploring a revised architecture using LangGraph, clearer orchestration boundaries, stronger research instrumentation, and a more rigorously defined Socratic methodology.
 
