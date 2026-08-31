@@ -23,7 +23,7 @@ A key design principle is to keep the human learner at the center of the reasoni
 
 The current prototype separates **workflow operations** from **Socratic domain concepts**. Each student message is one LangGraph run. The graph evaluates the learner response, selects the Socratic phase that should govern the next intervention, and then generates either a Socratic response or the closing reflection.
 
-Phase-specific generation nodes have been removed. The graph now has one `generate_response` node, and `TutorState.current_phase` determines the active Socratic behavior. Response generation is still temporarily scripted from `PHASE_CONTENT`; LLM-backed Socratic agents are the next implementation step.
+Phase-specific generation nodes have been removed. The graph now has one `generate_response` node, and `TutorState.current_phase` determines the active Socratic behavior. Phase-specific generation nodes have been removed. The graph now has one `generate_response` node, and `TutorState.current_phase` determines which specialist Socratic agent handles the turn. Socratic response generation is LLM-backed; deterministic `PHASE_CONTENT` remains temporarily for session initialization and test fixtures.
 
 ```mermaid
 graph LR;
@@ -215,7 +215,6 @@ The working design principle is:
 The four agents are therefore not separate LangGraph nodes. The graph's `generate_response` node will dispatch to the appropriate Socratic agent using `TutorState.current_phase`.
 
 This keeps the experimental architecture interpretable and avoids creating agents for ordinary orchestration or utility functions.
-
 
 
 

@@ -1,5 +1,8 @@
 from app.socratic.phases import SocraticPhase
-
+from app.socratic.prompts.aporia import APORIA_PROMPT
+from app.socratic.prompts.dialectic import DIALECTIC_PROMPT
+from app.socratic.prompts.elenchus import ELENCHUS_PROMPT
+from app.socratic.prompts.maieutics import MAIEUTICS_PROMPT
 
 PHASE_CONTENT = {
     SocraticPhase.ELENCHUS: [
@@ -20,27 +23,17 @@ PHASE_CONTENT = {
     ],
 }
 
-
 REFLECTION_CONTENT = [
     "Good — you've moved from 'citations = quality' to something more nuanced: citations are a preliminary signal, not proof. That's the kind of revision this process is meant to produce.",
     "Let's recap: you're now looking for more than just citation count — you're considering the paper's content, its authors' reputation, and its context. That's a more nuanced approach to evaluation.",
     "You've moved beyond the initial assumption that citations alone determine quality. That's the kind of critical thinking we're aiming for here.",
 ]
 
-
-ELENCHUS_PROMPT = """You are guiding a learner using the Elenchus phase of a Socratic tutoring process.
-
-Your role is to test the logical consistency of the learner's claim through
-cross-examination rather than state your own opinion or provide the answer.
-
-Use questions that probe:
-- assumptions
-- reasons and evidence
-- alternative viewpoints
-- implications
-
-Ask exactly one focused question per turn.
-Do not lecture.
-Do not provide the answer.
-Engage directly with the learner's reasoning.
-"""
+__all__ = [
+    "APORIA_PROMPT",
+    "DIALECTIC_PROMPT",
+    "ELENCHUS_PROMPT",
+    "MAIEUTICS_PROMPT",
+    "PHASE_CONTENT",
+    "REFLECTION_CONTENT",
+]
