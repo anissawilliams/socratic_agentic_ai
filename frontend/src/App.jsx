@@ -1,76 +1,45 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
-import ChatWindow from "./components/ChatWindow";
-import ChatInput from "./components/ChatInput";
-import PhaseIndicator from "./components/PhaseIndicator";
-import { useChatSession } from "./hooks/useChatSession";
-
-import "./App.css";
-import "./assets/socratic-tutor.css";
-import socratesAvatar from "./assets/socrates-avatar.png";
-
+import Auth from "./components/Auth";
+import TutorApp from "./TutorApp";
+import { supabase } from "./api/supabase";
 
 function App() {
-  const {
-    messages,
-    phase,
-    isWaiting,
-    isComplete,
-    sendMessage,
-    resetSession,
-    startSession,
-  } = useChatSession();
-
-  const hasStarted = useRef(false);
+  const [session, setSession] = useState(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
 
   useEffect(() => {
-    if (hasStarted.current) {
-      return;
-    }
+    const loadSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    hasStarted.current = true;
-    startSession();
+      setSession(session);
+      setAuthLoaded(true);
+    };
+
+    loadSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  return (
-    <div className="app-shell">
-      <header className="app-header">
-        <div className="tutor-brand">
-          <img
-            src={socratesAvatar}
-            alt=""
-            className="tutor-brand__avatar"
-          />
+  if (!authLoaded) {
+    return null;
+  }
 
-          <div className="tutor-brand__text">
-            <h1 className="tutor-brand__name">Socratic Tutor</h1>
-            <span className="tutor-brand__status">
-              Ready to explore
-            </span>
-          </div>
-        </div>
+  if (!session) {
+    return <Auth />;
+  }
 
-        <button
-          className="new-session-button"
-          onClick={resetSession}
-        >
-          New session
-        </button>
-      </header>
-
-      <PhaseIndicator
-        phase={phase}
-        visible={!isComplete && phase !== null}
-      />
-
-      <ChatWindow messages={messages} />
-
-      <ChatInput
-        onSend={sendMessage}
-        disabled={isWaiting || isComplete}
-      />
-    </div>
-  );
+  return <TutorApp />;
 }
 
 export default App;
