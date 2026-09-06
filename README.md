@@ -23,24 +23,61 @@ A key design principle is to keep the human learner at the center of the reasoni
 
 The current prototype separates **workflow operations** from **Socratic domain concepts**. Each student message is one LangGraph run. The graph evaluates the learner response, selects the Socratic phase that should govern the next intervention, and then generates either a Socratic response or the closing reflection.
 
-Phase-specific generation nodes have been removed. The graph now has one `generate_response` node, and `TutorState.current_phase` determines the active Socratic behavior. Phase-specific generation nodes have been removed. The graph now has one `generate_response` node, and `TutorState.current_phase` determines which specialist Socratic agent handles the turn. Socratic response generation is LLM-backed; deterministic `PHASE_CONTENT` remains temporarily for session initialization and test fixtures.
+Phase-specific generation nodes have been removed. The graph now has one `generate_response` node, and `TutorState.current_phase` determines which specialist Socratic agent handles the turn. Socratic response generation is LLM-backed; deterministic `PHASE_CONTENT` remains temporarily for session initialization and test fixtures.
+
+The application now also includes participant authentication and authorization. Supabase Auth establishes learner identity through passwordless email sign-in, while the backend verifies that the authenticated email belongs to an authorized study participant and retrieves the participant's pre-assigned experimental condition before the tutoring interface is mounted.
 
 ```mermaid
-graph LR;
-    learner["Learner"];
-    ui["React / Vite"];
-    api["FastAPI"];
-    graphNode["LangGraph Workflow"];
-    domain["Socratic Domain"];
-    content["PHASE_CONTENT"];
+flowchart LR
+    LEARNER["Learner"]
 
-    learner --> ui;
-    ui -->|"GET /tutor/start<br/>POST /tutor/message"| api;
-    api -->|"invoke"| graphNode;
-    graphNode -->|"current_phase"| domain;
-    domain --> content;
-    content -->|"temporary scripted response"| graphNode;
+    subgraph FRONTEND["React / Vite Frontend"]
+        APP["App<br/>Authentication Gate"]
+        AUTH["Auth<br/>Magic Link Sign-In"]
+        TUTOR["TutorApp<br/>Socratic Tutor UI"]
+    end
+
+    subgraph SUPABASE["Supabase"]
+        SBAUTH["Supabase Auth<br/>Magic Links · Sessions"]
+        PARTICIPANT["study_participant<br/>email · condition"]
+    end
+
+    subgraph BACKEND["FastAPI Backend"]
+        AUTHAPI["Auth API<br/>GET /auth/me"]
+        TUTORAPI["Tutor API<br/>/tutor/start · /tutor/message"]
+        AUTHSVC["Auth Service"]
+        PARTICIPANTDB["Participant DB Access"]
+    end
+
+    subgraph TUTORING["Tutoring System"]
+        CONDITION["Tutor Condition"]
+        GRAPH["LangGraph Workflow"]
+        SOCRATIC["Socratic Domain<br/>Elenchus · Aporia · Maieutics · Dialectic"]
+        LLM["LLM Service"]
+    end
+
+    LEARNER --> APP
+
+    APP -->|not authenticated| AUTH
+    AUTH -->|magic link| SBAUTH
+    SBAUTH -->|authenticated session| APP
+
+    APP -->|access token| AUTHAPI
+    AUTHAPI --> AUTHSVC
+    AUTHSVC --> PARTICIPANTDB
+    PARTICIPANTDB --> PARTICIPANT
+
+    AUTHAPI -->|authorized participant + condition| APP
+    APP -->|authorized| TUTOR
+
+    TUTOR --> TUTORAPI
+    TUTORAPI --> CONDITION
+    CONDITION --> GRAPH
+    GRAPH --> SOCRATIC
+    SOCRATIC --> LLM
 ```
+
+**Experimental condition assignment is treated as study-setup logic rather than login-time application logic.** Participants will be pre-assigned to conditions before authentication, and the persisted assignment will determine tutor routing after login.
 
 
 
@@ -231,7 +268,7 @@ This keeps the experimental architecture interpretable and avoids creating agent
 - LangChain
 - OpenAI API
 - Pydantic
-- Supabase / PostgreSQL planned for persistence and preliminary JSONB research logging
+- Supabase / PostgreSQL for participant authorization and planned research persistence
 
 
 
@@ -262,7 +299,14 @@ The final data-collection deployment is expected to use appropriately provisione
 socratic_agentic_ai/
 ├── app/
 │   ├── api/                   # FastAPI routes and request/response handling
-│   ├── db/                    # Existing database stubs / transitional persistence code
+│   │   ├── auth/
+│   │   │   ├── routes.py      # Participant authorization endpoint
+│   │   │   └── schemas.py     # Auth response schemas
+│   │   └── tutor.py           # Tutor endpoints
+│   ├── db/
+│   │   ├── participants.py    # study_participant database access
+│   │   ├── models.py          # Database model stubs
+│   │   └── sessions.py        # Session persistence stubs
 │   ├── graph/                 # LangGraph workflow orchestration
 │   │   ├── nodes/             # Workflow nodes: evaluate, select, generate, reflect, complete
 │   │   ├── graph.py           # Graph construction / topology
@@ -271,15 +315,27 @@ socratic_agentic_ai/
 │   ├── models/                # Application/data-model stubs
 │   ├── socratic/              # Socratic domain model
 │   │   ├── phases.py          # SocraticPhase and current phase-order policy
-│   │   ├── definitions.py     # Literature-grounded method definitions (in progress)
-│   │   └── prompts.py         # Socratic prompt/content definitions
-│   ├── services/              # Infrastructure services such as LLM / Supabase clients
+│   │   ├── definitions.py     # Literature-grounded method definitions
+│   │   └── prompts/           # Literature-aligned Socratic agent prompts
+│   ├── services/
+│   │   ├── auth.py            # Participant access business logic
+│   │   ├── assignment.py      # Planned condition-assignment logic
+│   │   ├── llm.py             # LLM client/service
+│   │   └── supabase.py        # Supabase client setup
 │   ├── persistence/           # Event and session persistence boundaries
 │   ├── tools/                 # Reusable tutor capabilities
 │   └── main.py                # FastAPI application entry point
 ├── frontend/
 │   ├── public/
-│   └── src/                   # React application
+│   └── src/
+│       ├── api/
+│       │   ├── authClient.js  # Backend participant authorization client
+│       │   ├── chatClient.js  # Tutor API client
+│       │   └── supabase.js    # Browser Supabase Auth client
+│       ├── components/
+│       │   └── Auth.jsx       # Magic-link sign-in UI
+│       ├── App.jsx            # Authentication / authorization gate
+│       └── TutorApp.jsx       # Authenticated Socratic Tutor application
 ├── scripts/
 │   └── test_graph.py          # Graph smoke tests
 ├── .env.example
