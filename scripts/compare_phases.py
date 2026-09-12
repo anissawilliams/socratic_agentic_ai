@@ -73,6 +73,17 @@ FIXTURES = {
             )
         ),
     ],
+    "after bare yes — maieutics should extend, not re-fight": [
+        tutor(OPENING),
+        HumanMessage(content="Citation count seems like a good measure of quality to me."),
+        tutor(
+            "You hold that citation count measures quality. Consider a paper cited "
+            "hundreds of times because it failed to replicate. Those two cannot both "
+            "stand. Which do you give up?",
+            SocraticPhase.APORIA,
+        ),
+        HumanMessage(content="yes"),
+    ],
     "learner has conceded their account does not hold": [
         tutor(OPENING),
         HumanMessage(
