@@ -6,7 +6,6 @@ from app.graph.routing import route_after_phase_selection
 from app.graph.nodes.evaluate_response import evaluate_student_response
 from app.graph.nodes.select_phase import select_phase
 from app.graph.nodes.generate_response import generate_response
-from app.graph.nodes.generate_reflection import generate_reflection
 from app.graph.nodes.complete_session import complete_session
 from app.graph.nodes.log_event import log_event
 
@@ -30,11 +29,6 @@ def build_graph():
     )
 
     graph.add_node(
-        "generate_reflection",
-        generate_reflection,
-    )
-
-    graph.add_node(
         "complete_session",
         complete_session,
     )
@@ -42,11 +36,6 @@ def build_graph():
     # Same logging implementation, invoked at different workflow points.
     graph.add_node(
         "log_turn",
-        log_event,
-    )
-
-    graph.add_node(
-        "log_reflection",
         log_event,
     )
 
@@ -70,7 +59,7 @@ def build_graph():
         route_after_phase_selection,
         {
             "generate_response": "generate_response",
-            "generate_reflection": "generate_reflection",
+            "complete_session": "complete_session",
         },
     )
 
@@ -85,17 +74,7 @@ def build_graph():
         END,
     )
 
-    # Reflection / session completion
-    graph.add_edge(
-        "generate_reflection",
-        "log_reflection",
-    )
-
-    graph.add_edge(
-        "log_reflection",
-        "complete_session",
-    )
-
+    # Session completion. No closing tutor message is generated.
     graph.add_edge(
         "complete_session",
         "log_session_complete",
