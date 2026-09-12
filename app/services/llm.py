@@ -4,6 +4,9 @@ from functools import lru_cache
 from langchain_core.messages import AIMessage, BaseMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
+from typing import TypeVar
+from pydantic import BaseModel
+
 from app.config import (
     LLM_MODEL,
     LLM_PROMPT_VERSION,
@@ -57,3 +60,35 @@ def complete(
         config["run_name"] = run_name
 
     return get_chat_model().invoke(payload, config=config)
+
+StructuredOutput = TypeVar("StructuredOutput", bound=BaseModel)
+
+
+def complete_structured(
+    messages: Sequence[BaseMessage],
+    *,
+    schema: type[StructuredOutput],
+    system: str | None = None,
+    run_name: str | None = None,
+    metadata: dict | None = None,
+) -> StructuredOutput:
+    """Invoke the shared chat model and return structured output."""
+
+    payload: list[BaseMessage] = list(messages)
+
+    if system is not None:
+        payload = [SystemMessage(content=system), *payload]
+
+    config = {
+        "metadata": {
+            **llm_metadata(),
+            **(metadata or {}),
+        }
+    }
+
+    if run_name is not None:
+        config["run_name"] = run_name
+
+    model = get_chat_model().with_structured_output(schema)
+
+    return model.invoke(payload, config=config)
