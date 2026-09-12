@@ -1,18 +1,44 @@
 import axios from "axios";
 
+import { supabase } from "./supabase";
+
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+// Read the token per request instead of capturing it once. A tutoring session
+// can outlive a single access token, and supabase-js refreshes it in the
+// background, so asking for the current session avoids sending a stale one.
+async function authHeaders() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    throw new Error("Not signed in");
+  }
+
+  return { Authorization: `Bearer ${session.access_token}` };
+}
+
 export async function startSession() {
-    const res = await axios.get(`${API_BASE}/tutor/start`);
-    return res.data;
+  const res = await axios.get(`${API_BASE}/tutor/start`, {
+    headers: await authHeaders(),
+  });
+
+  return res.data;
 }
 
 export async function sendMessage(sessionId, message) {
-  const res = await axios.post(`${API_BASE}/tutor/message`, {
-    session_id: sessionId,
-    message,
-  });
+  const res = await axios.post(
+    `${API_BASE}/tutor/message`,
+    {
+      session_id: sessionId,
+      message,
+    },
+    {
+      headers: await authHeaders(),
+    }
+  );
 
   return res.data;
 }

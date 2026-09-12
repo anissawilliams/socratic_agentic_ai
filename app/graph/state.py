@@ -14,12 +14,14 @@ class TutorCondition(str, Enum):
 
 class TutorState(TypedDict):
     session_id: str
+    participant_id: str
     messages: Annotated[list[BaseMessage], add_messages]
     tutor_condition: TutorCondition | None
     current_phase: SocraticPhase | None
     previous_phase: SocraticPhase | None
     pending_event: EventType | None
     phase_attempt_count: int
+    phase_turns_taken: int
     current_turn_id: str | None
     last_student_message: str
     response_evaluation: ResponseEvaluation | None

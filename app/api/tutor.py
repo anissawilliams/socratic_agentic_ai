@@ -1,9 +1,10 @@
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from langchain_core.messages import AIMessage, HumanMessage
 from pydantic import BaseModel
 
+from app.api.auth.dependencies import require_participant
 from app.graph.graph import tutor_graph
 from app.graph.state import TutorState, TutorCondition
 from app.socratic.phases import SocraticPhase
@@ -29,15 +30,17 @@ class TutorMessageResponse(BaseModel):
     is_complete: bool
 
 
-def _new_session_state(session_id: str) -> TutorState:
+def _new_session_state(session_id: str, participant_id: str) -> TutorState:
     return {
         "session_id": session_id,
+        "participant_id": participant_id,
         "messages": [],
         "tutor_condition": TutorCondition.SOCRATIC,
         "current_turn_id": None,
         "current_phase": SocraticPhase.ELENCHUS,
         "previous_phase": None,
         "phase_attempt_count": 0,
+        "phase_turns_taken": 0,
         "last_student_message": "",
 
         "response_evaluation": {
@@ -55,12 +58,14 @@ def _new_session_state(session_id: str) -> TutorState:
     "/tutor/start",
     response_model=TutorMessageResponse,
 )
-async def start_session():
+async def start_session(
+    participant: dict = Depends(require_participant),
+):
     session_id = uuid4()
     turn_id = uuid4()
     session_key = str(session_id)
     turn_key = str(turn_id)
-    state = _new_session_state(session_key)
+    state = _new_session_state(session_key, str(participant["id"]))
     state["current_turn_id"] = turn_key
     opening_line = PHASE_CONTENT[SocraticPhase.ELENCHUS][0]
 
@@ -82,14 +87,19 @@ async def start_session():
     "/tutor/message",
     response_model=TutorMessageResponse,
 )
-async def send_message(req: TutorMessageRequest):
+async def send_message(
+    req: TutorMessageRequest,
+    participant: dict = Depends(require_participant),
+):
     session_key = str(req.session_id)
     turn_id = uuid4()
     turn_key = str(turn_id)
-    
+
     state = _sessions.get(session_key)
 
-    if state is None:
+    # Someone else's session is reported as missing rather than forbidden, so a
+    # guessed session ID cannot be used to confirm that a session exists.
+    if state is None or state["participant_id"] != str(participant["id"]):
         raise HTTPException(
             status_code=404,
             detail="Session not found. Start a new tutoring session.",
