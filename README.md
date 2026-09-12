@@ -90,10 +90,11 @@ flowchart TD
     START --> evaluate
     evaluate --> select_phase
     select_phase -->|active Socratic phase| generate_response
-    select_phase -->|Socratic sequence complete| generate_reflection
-    generate_response --> END
-    generate_reflection --> complete_session
-    complete_session --> END
+    select_phase -->|Socratic sequence complete| complete_session
+    generate_response --> log_turn
+    log_turn --> END
+    complete_session --> log_session_complete
+    log_session_complete --> END
 ```
 
 
@@ -105,7 +106,7 @@ The routing model intentionally separates four concerns:
 - `generate_response` asks **what should the tutor say under that phase?**
 - graph routing asks **which computational step executes next?**
 
-Sessions currently begin in **Elenchus**. If the learner hedges and attempts remain, the next turn stays in the same phase; otherwise the phase-selection policy advances through the current prototype sequence `Elenchus → Aporia → Maieutics → Dialectic`. The sequence is a current pedagogical policy rather than a structural constraint of the graph. When the Socratic sequence finishes, `current_phase` becomes `None`, the graph generates a closing reflection, and `complete_session` finalizes the session.
+Sessions currently begin in **Elenchus**. If the learner hedges and attempts remain, the next turn stays in the same phase; otherwise the phase-selection policy advances through the current prototype sequence `Elenchus → Aporia → Maieutics → Dialectic`. The sequence is a current pedagogical policy rather than a structural constraint of the graph. When the Socratic sequence finishes, `current_phase` becomes `None`, the graph routes to `complete_session` with **no closing tutor message** (reflection is unwired pending study design; see `STUDY_DESIGN_QUESTIONS.md`).
 
 Session state is currently in memory and is lost on restart.
 
