@@ -9,7 +9,6 @@ from app.persistence.events import EventType
 
 class TutorCondition(str, Enum):
     SOCRATIC = "socratic"   # Default
-    SCAFFOLDED = "scaffolded"
     DIRECT_CHAT = "direct_chat"
 
 class TutorState(TypedDict):
@@ -18,10 +17,7 @@ class TutorState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
     tutor_condition: TutorCondition | None
     current_phase: SocraticPhase | None
-    previous_phase: SocraticPhase | None
     pending_event: EventType | None
-    phase_attempt_count: int
-    phase_turns_taken: int
     current_turn_id: str | None
     last_student_message: str
     response_evaluation: ResponseEvaluation | None

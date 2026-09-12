@@ -32,7 +32,6 @@ def generate_response(state: TutorState) -> dict:
     response = tag_phase(agent(state), current_phase)
 
     return {
-        "messages": [response],
-        "phase_turns_taken": state.get("phase_turns_taken", 0) + 1,
-        "pending_event": "turn_completed",
-    }
+    "messages": [response],
+    "pending_event": "turn_completed",
+}

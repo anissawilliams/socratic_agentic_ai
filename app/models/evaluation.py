@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 EvaluationDecision = Literal[
     "stay",
     "advance",
-    "complete",
 ]
 
 

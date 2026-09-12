@@ -12,11 +12,11 @@ def build_event_data(state: TutorState) -> dict:
     """Build the JSONB payload for the event currently pending."""
     event_type = state["pending_event"]
 
+    evaluation = state.get("response_evaluation")
+
     base_data = {
         "current_phase": _enum_value(state.get("current_phase")),
         "previous_phase": _enum_value(state.get("previous_phase")),
-        "phase_attempt_count": state.get("phase_attempt_count"),
-        "phase_turns_taken": state.get("phase_turns_taken"),
         "tutor_condition": _enum_value(state.get("tutor_condition")),
     }
 
@@ -31,18 +31,10 @@ def build_event_data(state: TutorState) -> dict:
                 "content",
                 str(last_message),
             ),
-            "response_evaluation": state["response_evaluation"],
-        }
-
-    if event_type == "reflection_generated":
-        last_message = state["messages"][-1]
-
-        return {
-            **base_data,
-            "reflection": getattr(
-                last_message,
-                "content",
-                str(last_message),
+            "response_evaluation": (
+                evaluation.model_dump()
+                if evaluation is not None
+                else None
             ),
         }
 
@@ -58,12 +50,9 @@ def build_event_data(state: TutorState) -> dict:
 def log_event(state: TutorState) -> dict:
     event_type = state.get("pending_event")
 
-    #print("LOG_EVENT:", event_type, state["session_id"])
-
     if event_type is None:
         return {}
 
-    #print("BUILDING EVENT DATA:", build_event_data(state))
     save_event(
         session_id=state["session_id"],
         event_type=event_type,

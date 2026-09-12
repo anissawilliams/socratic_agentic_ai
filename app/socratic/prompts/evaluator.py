@@ -23,5 +23,4 @@ as proxies for understanding.
 Return a structured judgment:
 - stay
 - advance
-- complete
 """

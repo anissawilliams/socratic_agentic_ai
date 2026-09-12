@@ -27,7 +27,6 @@ class TutorMessageResponse(BaseModel):
     current_turn_id: UUID | None
     message: str
     current_phase: str | None
-    phase_attempt_count: int
     is_complete: bool
 
 
@@ -42,9 +41,6 @@ def _new_session_state(
         "tutor_condition": tutor_condition_for_participant(participant),
         "current_turn_id": None,
         "current_phase": SocraticPhase.ELENCHUS,
-        "previous_phase": None,
-        "phase_attempt_count": 0,
-        "phase_turns_taken": 0,
         "last_student_message": "",
 
         "response_evaluation": None,
@@ -96,7 +92,6 @@ async def start_session(
         message=opening_line,
         current_phase=state["current_phase"].value,
         current_turn_id=state["current_turn_id"],
-        phase_attempt_count=state["phase_attempt_count"],
         is_complete=state["is_complete"],
     )
 
@@ -153,6 +148,5 @@ async def send_message(
             if current_phase is not None
             else None
         ),
-        phase_attempt_count=result["phase_attempt_count"],
         is_complete=result["is_complete"],
     )
