@@ -7,11 +7,7 @@ lets a role see that its move has already been spent.
 """
 
 from collections.abc import Sequence
-
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
-
-from app.graph.response_heuristics import is_bare_assent
-
+from langchain_core.messages import AIMessage, BaseMessage
 from app.socratic.phases import SocraticPhase
 
 PHASE_KEY = "socratic_phase"
@@ -73,53 +69,22 @@ def system_prompt(role_prompt: str, messages: Sequence[BaseMessage]) -> str:
     return f"{role_prompt}\n\n{phase_context(messages)}"
 
 
-def _maieutics_thread(
-    messages: Sequence[BaseMessage],
-    last_student_message: str,
-) -> str:
-    """What maieutics should extend — including substance behind a bare assent."""
-    latest = " ".join(last_student_message.split())
-
-    if not is_bare_assent(last_student_message):
-        return latest
-
-    student_turns = [
-        str(message.content)
-        for message in messages
-        if isinstance(message, HumanMessage)
-    ]
-    prior = student_turns[-2] if len(student_turns) >= 2 else latest
-
-    last_tutor = ""
-    for message in reversed(messages):
-        if isinstance(message, AIMessage):
-            last_tutor = " ".join(str(message.content).split())
-            break
-
-    parts = [
-        f'The learner assented briefly ("{latest}"). That closes the impasse.',
-        f'What they were arguing before that assent: "{prior}"',
-    ]
-    if last_tutor:
-        parts.append(f'The impasse they assented to: "{last_tutor[:280]}"')
-
-    return "\n".join(parts)
-
-
 def maieutics_system_prompt(
     messages: Sequence[BaseMessage],
     *,
     last_student_message: str,
 ) -> str:
-    """Maieutics-specific system text: phase history plus the thread to extend."""
+    """Build Maieutics system instructions without interpreting learner intent."""
     from app.socratic.prompts.maieutics import MAIEUTICS_PROMPT
 
-    thread = _maieutics_thread(messages, last_student_message)
+    latest = " ".join(last_student_message.split())
+
     return (
         f"{MAIEUTICS_PROMPT}\n\n"
         f"{phase_context(messages)}\n\n"
-        "Thread to extend (read this for meaning, not keywords):\n"
-        f"  {thread}\n\n"
-        "Cross-examination and impasse are complete. Extend from this thread "
-        "only. Do not reopen them."
+        "Latest learner contribution:\n"
+        f'  "{latest}"\n\n'
+        "The dialogue has entered the Maieutics phase. Continue from what the "
+        "learner is actually expressing here. Do not infer agreement merely "
+        "from brevity, and do not reopen earlier phases."
     )
