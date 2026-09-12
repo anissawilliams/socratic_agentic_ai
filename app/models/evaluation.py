@@ -17,3 +17,10 @@ class ResponseEvaluation(TypedDict):
     uncertainty_present: NotRequired[bool]
     phase_goal_satisfied: NotRequired[bool]
     reasoning_summary: NotRequired[str]
+
+    # The inputs the verdict was computed from. Recorded because a stored
+    # boolean cannot be checked against human coding after the fact, but the
+    # text features it was derived from can.
+    word_count: NotRequired[int]
+    matched_hedge_phrase: NotRequired[str | None]
+    bare_assent: NotRequired[bool]
