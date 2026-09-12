@@ -20,25 +20,45 @@ async function authHeaders() {
   return { Authorization: `Bearer ${session.access_token}` };
 }
 
-export async function startSession() {
-  const res = await axios.get(`${API_BASE}/tutor/start`, {
-    headers: await authHeaders(),
-  });
+function requestFailure(err) {
+  const status = err?.response?.status ?? null;
+  const detail = err?.response?.data?.detail ?? null;
 
-  return res.data;
+  const failure = new Error(detail || err?.message || "Request failed");
+  failure.status = status;
+  failure.detail = detail;
+  failure.cause = err;
+
+  return failure;
+}
+
+export async function startSession() {
+  try {
+    const res = await axios.get(`${API_BASE}/tutor/start`, {
+      headers: await authHeaders(),
+    });
+
+    return res.data;
+  } catch (err) {
+    throw requestFailure(err);
+  }
 }
 
 export async function sendMessage(sessionId, message) {
-  const res = await axios.post(
-    `${API_BASE}/tutor/message`,
-    {
-      session_id: sessionId,
-      message,
-    },
-    {
-      headers: await authHeaders(),
-    }
-  );
+  try {
+    const res = await axios.post(
+      `${API_BASE}/tutor/message`,
+      {
+        session_id: sessionId,
+        message,
+      },
+      {
+        headers: await authHeaders(),
+      }
+    );
 
-  return res.data;
+    return res.data;
+  } catch (err) {
+    throw requestFailure(err);
+  }
 }
