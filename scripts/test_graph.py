@@ -2,14 +2,14 @@ from dotenv import load_dotenv
 load_dotenv()
 from langchain_core.messages import AIMessage, HumanMessage
 
+from app.content.scenarios import load_scenario
 from app.graph.graph import tutor_graph
 from app.graph.state import TutorCondition
 from app.socratic.phases import SocraticPhase
-from app.socratic.prompts import PHASE_CONTENT
 
 from uuid import uuid4
 
-OPENING = PHASE_CONTENT[SocraticPhase.ELENCHUS][0]
+OPENING = load_scenario().opening_question
 
 CONSIDERED = (
     "Citation count can be useful because it shows that other researchers "
