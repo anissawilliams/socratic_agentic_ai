@@ -8,6 +8,7 @@ from app.api.auth.dependencies import require_participant
 from app.content.scenarios import load_scenario
 from app.graph.graph import tutor_graph
 from app.graph.state import TutorState, TutorCondition
+from app.services.condition import tutor_condition_for_participant
 from app.socratic.phases import SocraticPhase
 
 
@@ -30,12 +31,15 @@ class TutorMessageResponse(BaseModel):
     is_complete: bool
 
 
-def _new_session_state(session_id: str, participant_id: str) -> TutorState:
+def _new_session_state(
+    session_id: str,
+    participant: dict,
+) -> TutorState:
     return {
         "session_id": session_id,
-        "participant_id": participant_id,
+        "participant_id": str(participant["id"]),
         "messages": [],
-        "tutor_condition": TutorCondition.SOCRATIC,
+        "tutor_condition": tutor_condition_for_participant(participant),
         "current_turn_id": None,
         "current_phase": SocraticPhase.ELENCHUS,
         "previous_phase": None,
@@ -65,7 +69,23 @@ async def start_session(
     turn_id = uuid4()
     session_key = str(session_id)
     turn_key = str(turn_id)
-    state = _new_session_state(session_key, str(participant["id"]))
+    try:
+        state = _new_session_state(session_key, participant)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=403,
+            detail=str(exc),
+        ) from exc
+
+    if state["tutor_condition"] is not TutorCondition.SOCRATIC:
+        raise HTTPException(
+            status_code=501,
+            detail=(
+                f"Tutor condition {state['tutor_condition'].value!r} is assigned "
+                "but not implemented yet. Only the Socratic arm is active in this build."
+            ),
+        )
+
     state["current_turn_id"] = turn_key
     opening_line = load_scenario().opening_question
 

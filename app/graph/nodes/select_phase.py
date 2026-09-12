@@ -23,7 +23,7 @@ def select_phase(state: TutorState) -> dict:
     advances through SOCRATIC_PHASE_ORDER.
 
     When Dialectic is complete, current_phase becomes None so the graph
-    can route into the reflection/exit workflow.
+    can route to complete_session (no closing tutor turn).
     """
     current_phase = state["current_phase"]
 

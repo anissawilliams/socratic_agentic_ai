@@ -2,57 +2,28 @@
 
 ## Current checkpoint
 
-The core tutor workflow has been successfully refactored, tested, and
-instrumented with turn-level research logging.
+Graph flow (production path):
 
-Current graph flow:
+START → evaluate_response → select_phase → generate_response → log_turn → END
 
-START → evaluate_response → select_phase → generate_response → log_event → END
+When phases are exhausted:
 
-Reflection/completion path:
+select_phase → complete_session → log_session_complete → END
 
-select_phase → generate_reflection → log_event
-             → complete_session → log_event → END
+(No closing tutor message; reflection node is not wired — see `STUDY_DESIGN_QUESTIONS.md`.)
 
 Confirmed working:
 
-- `TutorState` refactor
-- `SocraticPhase`
-- `ResponseEvaluation` model
-- `evaluate_response`
-- `select_phase`
-- consolidated `generate_response`
-- reflection separated from Socratic phases
-- unified `log_event` implementation
-- Supabase `tutor_events` JSONB persistence
-- backend-generated UUID session IDs
-- backend-generated UUID turn IDs
-- `current_turn_id` carried in tutor state
-- student messages persisted in research events
-- tutor responses persisted in research events
-- current/previous phase persisted
-- response evaluation persisted
-- frontend no longer owns phase logic
-- live React → FastAPI → LangGraph → Supabase path verified
-- turn-level Elenchus → Aporia transition verified in Supabase
+- LLM-backed Socratic agents (elenchus, aporia, maieutics, dialectic) via `generate_response`
+- Maieutics semantic thread + bare-assent handling (`app/socratic/context.py`)
+- Heuristic `evaluate_response` (hedging, bare assent, response_type, word_count, …)
+- Supabase turn/session event logging
+- Participant auth + enrolled check; condition from DB → `TutorState.tutor_condition` at session start
+- In-memory sessions (lost on backend restart; UI handles 404)
+- Frontend tutor error messages by HTTP status
 
-Example persisted research event now contains:
+See `BACKLOG.md` for ordered next work (condition arms, phase gates, persistence, deployment).
 
-- `current_phase`
-- `previous_phase`
-- `student_message`
-- `tutor_response`
-- `tutor_condition`
-- `phase_attempt_count`
-- `response_evaluation`
-- session/turn identifiers
-
-Current response evaluation remains heuristic:
-
-- short responses and hedge terms are treated as hedging
-- richer `ResponseEvaluation` fields exist but are not populated yet
-
-Current tutor responses remain deterministic via `PHASE_CONTENT`.
 ---
 
 
