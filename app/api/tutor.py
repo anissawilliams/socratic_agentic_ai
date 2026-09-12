@@ -112,16 +112,24 @@ async def send_message(
         HumanMessage(content=req.message),
     ]
 
+    messages_before = len(state["messages"])
+
     result = tutor_graph.invoke(state)
 
     _sessions[session_key] = result
+
+    # The turn that completes the session generates no tutor message, so the
+    # last message is the learner's own. Returning it would echo the previous
+    # tutor turn back as though it were new.
+    generated = result["messages"][messages_before:]
+    tutor_message = generated[-1].content if generated else ""
 
     current_phase = result["current_phase"]
 
     return TutorMessageResponse(
         session_id=req.session_id,
         current_turn_id=turn_id,
-        message=result["messages"][-1].content,
+        message=tutor_message,
         current_phase=(
             current_phase.value
             if current_phase is not None
