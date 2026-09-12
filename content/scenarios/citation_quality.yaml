@@ -1,0 +1,15 @@
+# Participant-facing content. Kept out of the code so wording can be reviewed
+# and versioned on its own, and so one file answers "what did this participant
+# actually see". Bump `version` whenever any text below changes.
+
+key: citation_quality
+version: 1.0.0
+title: Citation count as a quality signal
+
+# The tutor's first turn. The learner's reply is the position elenchus
+# cross-examines, so this has to invite a stated position rather than a
+# yes or no.
+opening_question: >-
+  One of the main metrics that shows an academic paper is important and
+  high-quality is the number of citations. What do you think — is that a fair
+  claim?

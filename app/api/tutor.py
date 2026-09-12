@@ -5,10 +5,10 @@ from langchain_core.messages import AIMessage, HumanMessage
 from pydantic import BaseModel
 
 from app.api.auth.dependencies import require_participant
+from app.content.scenarios import load_scenario
 from app.graph.graph import tutor_graph
 from app.graph.state import TutorState, TutorCondition
 from app.socratic.phases import SocraticPhase
-from app.socratic.prompts import PHASE_CONTENT
 
 
 router = APIRouter()
@@ -67,7 +67,7 @@ async def start_session(
     turn_key = str(turn_id)
     state = _new_session_state(session_key, str(participant["id"]))
     state["current_turn_id"] = turn_key
-    opening_line = PHASE_CONTENT[SocraticPhase.ELENCHUS][0]
+    opening_line = load_scenario().opening_question
 
     state["messages"] = [AIMessage(content=opening_line)]
 
