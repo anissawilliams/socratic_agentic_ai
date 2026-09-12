@@ -47,9 +47,7 @@ def _new_session_state(
         "phase_turns_taken": 0,
         "last_student_message": "",
 
-        "response_evaluation": {
-            "hedging_detected": False,
-        },
+        "response_evaluation": None,
 
         "pending_event": None,
 
