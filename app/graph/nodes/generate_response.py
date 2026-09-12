@@ -1,4 +1,5 @@
 from app.graph.state import TutorState
+from app.socratic.context import tag_phase
 from app.socratic.agents import (
     generate_aporia_response,
     generate_dialectic_response,
@@ -27,7 +28,11 @@ def generate_response(state: TutorState) -> dict:
     if agent is None:
         raise ValueError(f"No Socratic agent for phase: {current_phase}")
 
+    # Tagging the turn is what lets later phases see which moves are spent.
+    response = tag_phase(agent(state), current_phase)
+
     return {
-        "messages": [agent(state)],
+        "messages": [response],
+        "phase_turns_taken": state.get("phase_turns_taken", 0) + 1,
         "pending_event": "turn_completed",
     }
