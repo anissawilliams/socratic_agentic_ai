@@ -16,6 +16,7 @@ def build_event_data(state: TutorState) -> dict:
         "current_phase": _enum_value(state.get("current_phase")),
         "previous_phase": _enum_value(state.get("previous_phase")),
         "phase_attempt_count": state.get("phase_attempt_count"),
+        "phase_turns_taken": state.get("phase_turns_taken"),
         "tutor_condition": _enum_value(state.get("tutor_condition")),
     }
 
