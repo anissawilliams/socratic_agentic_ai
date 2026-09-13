@@ -7,7 +7,6 @@ from app.graph.state import TutorCondition
 _CONDITION_BY_CODE: dict[str, TutorCondition] = {
     "scenario_questioning": TutorCondition.SOCRATIC,
     "socratic": TutorCondition.SOCRATIC,
-    "scaffolded": TutorCondition.SCAFFOLDED,
     "direct_chat": TutorCondition.DIRECT_CHAT,
 }
 

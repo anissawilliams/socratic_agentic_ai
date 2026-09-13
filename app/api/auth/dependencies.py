@@ -2,7 +2,11 @@ from fastapi import Header, HTTPException
 
 from app.services.auth import request_access
 from app.services.supabase import get_supabase_client
+import os
 
+DEV_AUTH_BYPASS = os.getenv("DEV_AUTH_BYPASS", "false").lower() == "true"
+DEV_PARTICIPANT_EMAIL = os.getenv("DEV_PARTICIPANT_EMAIL")
+APP_ENV = os.getenv("APP_ENV", "").lower()
 
 def require_participant(
     authorization: str | None = Header(default=None),
@@ -13,6 +17,27 @@ def require_participant(
     Authenticating with Supabase is not sufficient on its own: the account must
     also be enrolled in the study.
     """
+    if DEV_AUTH_BYPASS:
+        if APP_ENV != "development":
+            raise HTTPException(
+                status_code=503,
+                detail="Authentication bypass is only allowed in development",
+            )
+
+        if not DEV_PARTICIPANT_EMAIL:
+            raise HTTPException(
+                status_code=503,
+                detail="DEV_PARTICIPANT_EMAIL is not configured",
+            )
+
+        try:
+            return request_access(DEV_PARTICIPANT_EMAIL)
+        except ValueError:
+            raise HTTPException(
+                status_code=403,
+                detail="Development participant is not enrolled",
+            ) from None
+
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=401,

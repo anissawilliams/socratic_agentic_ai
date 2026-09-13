@@ -34,23 +34,31 @@ def _new_session_state(
     session_id: str,
     participant: dict,
 ) -> TutorState:
+    initial_phase = SocraticPhase.ELENCHUS
+
     return {
         "session_id": session_id,
         "participant_id": str(participant["id"]),
         "messages": [],
         "tutor_condition": tutor_condition_for_participant(participant),
-        "current_turn_id": None,
-        "current_phase": SocraticPhase.ELENCHUS,
-        "last_student_message": "",
+
+        "current_phase": initial_phase,
+        "previous_phase": None,
+        "phase_history": [initial_phase],
 
         "response_evaluation": None,
+        "route_decision": None,
 
         "pending_event": None,
+        "current_turn_id": None,
+        "last_student_message": "",
+
+        # Retained until the old routing mechanism is fully replaced.
+        "next_action": None,
 
         "is_complete": False,
         "completed_at": None,
     }
-
 
 @router.get(
     "/tutor/start",
