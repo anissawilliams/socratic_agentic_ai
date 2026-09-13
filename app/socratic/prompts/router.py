@@ -72,6 +72,18 @@ Routing requirements:
 - Avoid generic targets such as "explore this further" or
   "elaborate on the issue."
 - Select one role, one topic, one move type, and one target.
+- When evaluation guidance identifies a substantive unresolved
+  session-level issue, prioritize a next move that directly helps the
+  learner address that issue.
+- Treat the evaluator's follow-up target as guidance about what
+  intellectual work remains, not as learner-facing wording that must
+  be copied.
+- Avoid returning to material listed in evaluation guidance as
+  already established or to be avoided unless doing so is necessary
+  to resolve the identified unresolved issue.
+- The evaluator determines whether the session objective is satisfied.
+  Do not independently decide completion; use its guidance only to
+  select the most relevant next Socratic move.
 
 Topic requirements:
 

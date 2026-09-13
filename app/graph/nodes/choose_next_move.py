@@ -18,6 +18,7 @@ def choose_next_move_node(state: TutorState) -> dict:
         phase_history=state["phase_history"],
         routing_history=state["routing_history"],
         last_student_message=state["last_student_message"],
+        response_evaluation=state.get("response_evaluation"),
     )
 
     return {

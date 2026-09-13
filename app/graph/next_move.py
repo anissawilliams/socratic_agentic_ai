@@ -9,7 +9,7 @@ from app.socratic.phases import SocraticPhase
 from app.socratic.prompts.router import (
     NEXT_MOVE_ROUTER_PROMPT,
 )
-
+from app.models.evaluation import ResponseEvaluation
 
 _ROUTING_HISTORY_LIMIT = 8
 
@@ -35,6 +35,7 @@ def _runtime_context(
     phase_history: Sequence[SocraticPhase],
     routing_history: Sequence[RoutingRecord],
     last_student_message: str,
+    response_evaluation: ResponseEvaluation | None,
 ) -> dict:
     return {
         "current_phase": current_phase.value,
@@ -49,8 +50,19 @@ def _runtime_context(
             ]
         ],
         "latest_learner_response": last_student_message,
+        "evaluation_guidance": (
+            {
+                "session_unresolved_issue":
+                    response_evaluation.session_unresolved_issue,
+                "follow_up_target":
+                    response_evaluation.follow_up_target,
+                "avoid_repeating":
+                    response_evaluation.avoid_repeating,
+            }
+            if response_evaluation
+            else None
+        ),
     }
-
 
 def _invoke_router(
     *,
@@ -158,15 +170,15 @@ def choose_next_move(
     phase_history: Sequence[SocraticPhase],
     routing_history: Sequence[RoutingRecord],
     last_student_message: str,
+    response_evaluation: ResponseEvaluation | None,
 ) -> RouteDecision:
-    """Select a non-repetitive Socratic role and target."""
-
     runtime_context = _runtime_context(
-        current_phase=current_phase,
-        phase_history=phase_history,
-        routing_history=routing_history,
-        last_student_message=last_student_message,
-    )
+    current_phase=current_phase,
+    phase_history=phase_history,
+    routing_history=routing_history,
+    last_student_message=last_student_message,
+    response_evaluation=response_evaluation,
+)
 
     base_system = (
         f"{NEXT_MOVE_ROUTER_PROMPT}\n\n"
