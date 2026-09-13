@@ -15,7 +15,13 @@ import yaml
 SCENARIO_DIR = Path(__file__).resolve().parents[2] / "content" / "scenarios"
 DEFAULT_SCENARIO_KEY = "citation_quality"
 
-_REQUIRED_FIELDS = ("key", "version", "title", "opening_question")
+_REQUIRED_FIELDS = (
+    "key",
+    "version",
+    "title",
+    "opening_question",
+    "learning_objective",
+)
 
 
 @dataclass(frozen=True)
@@ -24,6 +30,7 @@ class Scenario:
     version: str
     title: str
     opening_question: str
+    learning_objective: str
 
     # Fingerprint of the file as loaded. Version is declared by hand and can be
     # forgotten; this cannot, so a wording change that skipped a version bump is
@@ -65,5 +72,6 @@ def load_scenario(key: str = DEFAULT_SCENARIO_KEY) -> Scenario:
         # Folded YAML preserves the line breaks of the source file; the learner
         # should see one paragraph.
         opening_question=" ".join(str(data["opening_question"]).split()),
+        learning_objective=" ".join(str(data["learning_objective"]).split()),
         sha256=sha256(raw).hexdigest(),
     )

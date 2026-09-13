@@ -1,10 +1,17 @@
 from app.graph.state import TutorState
 
 
-def route_after_phase_selection(state: TutorState) -> str:
-    """Route to response generation or session completion."""
+def route_after_evaluation(state: TutorState) -> str:
+    """Route to session completion or the next Socratic move."""
 
-    if state["current_phase"] is None:
+    evaluation = state.get("response_evaluation")
+
+    if evaluation is None:
+        raise ValueError(
+            "Cannot route after evaluation without a response evaluation."
+        )
+
+    if evaluation.session_goal_satisfied:
         return "complete_session"
 
-    return "generate_response"
+    return "choose_next_move"

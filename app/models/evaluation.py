@@ -1,5 +1,4 @@
 from typing import Literal
-
 from pydantic import BaseModel, Field
 
 
@@ -78,5 +77,31 @@ class ResponseEvaluation(BaseModel):
             "Questions or requests already adequately answered that "
             "the tutor should avoid repeating. Use an empty list "
             "when none are relevant."
+        )
+    )
+
+    session_goal_satisfied: bool = Field(
+    description=(
+        "Whether the learner has demonstrated the scenario-level "
+        "learning objective sufficiently that another substantive "
+        "Socratic move is no longer warranted."
+    )
+)
+
+    session_unresolved_issue: str | None = Field(
+        description=(
+            "One substantive issue that still prevents completion of the "
+            "scenario-level learning objective. Use null when no such "
+            "issue remains. Do not use optional detail, wording refinement, "
+            "citation mechanics, or another possible example as a reason "
+            "to continue."
+        )
+    )
+
+    session_completion_reason: str | None = Field(
+        description=(
+            "When session_goal_satisfied is true, briefly explain what the "
+            "learner has demonstrated across the dialogue that justifies "
+            "ending the Socratic inquiry. Otherwise use null."
         )
     )

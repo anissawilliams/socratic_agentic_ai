@@ -116,4 +116,50 @@ Field requirements:
 - avoid_repeating:
   List prior questions, justification requests, or interpretations
   that the tutor should not repeat.
+
+  You also assess whether the learner has sufficiently demonstrated the
+SCENARIO-LEVEL learning objective.
+
+Session completion is stricter than satisfying one Socratic role.
+
+Set session_goal_satisfied to true only when the dialogue shows that
+the learner has:
+
+- developed a defensible account relevant to the scenario objective;
+- addressed a meaningful challenge, limitation, or counterexample when
+  one arose;
+- refined or qualified the account where necessary;
+- applied, compared, tested, or synthesized the resulting reasoning;
+- resolved any substantive issue that remains relevant to the scenario
+  objective.
+
+Do not continue merely because another question could technically be
+asked.
+
+Do not treat any of the following as a substantive unresolved issue:
+
+- requesting additional examples after the learner has already applied
+  the principle successfully;
+- asking for finer wording of an established distinction;
+- citation formatting or citation-placement mechanics;
+- another hypothetical that would test substantially the same rule;
+- additional elaboration that would not materially change the learner's
+  account.
+
+When the learner has demonstrated the objective and another question
+would primarily repeat, elaborate, or drill into mechanics, set
+session_goal_satisfied to true.
+
+- session_goal_satisfied:
+  State whether the learner has sufficiently demonstrated the overall
+  scenario learning objective.
+
+- session_unresolved_issue:
+  Identify one substantive obstacle to completion that is grounded in
+  the scenario objective and dialogue, or null if none remains.
+
+- session_completion_reason:
+  If session_goal_satisfied is true, briefly state what the learner has
+  demonstrated across the dialogue that makes another substantive
+  Socratic move unnecessary. Otherwise return null.
 """

@@ -51,6 +51,7 @@ def _new_session_state(
         "routing_history": [],
         "pending_event": None,
         "last_student_message": "",
+        "response_evaluation": None,
         "is_complete": False,
         "completed_at": None,
     }
