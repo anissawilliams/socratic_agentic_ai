@@ -134,9 +134,7 @@ async def send_message(
 
     _sessions[session_key] = result
 
-    # The turn that completes the session generates no tutor message, so the
-    # last message is the learner's own. Returning it would echo the previous
-    # tutor turn back as though it were new.
+    # Return only messages generated during this graph invocation.
     generated = result["messages"][messages_before:]
     tutor_message = generated[-1].content if generated else ""
 
