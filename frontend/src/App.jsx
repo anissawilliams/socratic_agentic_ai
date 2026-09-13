@@ -6,6 +6,10 @@ import TutorApp from "./TutorApp";
 import { supabase } from "./api/supabase";
 import { getParticipant } from "./api/authClient";
 
+const DEV_AUTH_BYPASS =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
+
 function App() {
   const [session, setSession] = useState(null);
   const [participant, setParticipant] = useState(null);
@@ -13,6 +17,36 @@ function App() {
   const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
+    if (DEV_AUTH_BYPASS) {
+      let active = true;
+
+      const loadDevParticipant = async () => {
+        try {
+          const participant = await getParticipant();
+
+          if (active) {
+            setParticipant(participant);
+          }
+        } catch {
+          if (active) {
+            setAuthError(
+              "Could not load the development participant. Check the backend bypass settings and enrollment."
+            );
+          }
+        } finally {
+          if (active) {
+            setAuthLoaded(true);
+          }
+        }
+      };
+
+      loadDevParticipant();
+
+      return () => {
+        active = false;
+      };
+    }
+
     const loadAuth = async () => {
       const {
         data: { session },
@@ -70,7 +104,7 @@ function App() {
     return null;
   }
 
-  if (!session) {
+    if (!session && !DEV_AUTH_BYPASS) {
     return <Auth />;
   }
 

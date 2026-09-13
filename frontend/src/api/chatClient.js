@@ -5,10 +5,17 @@ import { supabase } from "./supabase";
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+  const DEV_AUTH_BYPASS =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
 // Read the token per request instead of capturing it once. A tutoring session
 // can outlive a single access token, and supabase-js refreshes it in the
 // background, so asking for the current session avoids sending a stale one.
 async function authHeaders() {
+  if (DEV_AUTH_BYPASS) {
+    return {};
+  }
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -17,7 +24,9 @@ async function authHeaders() {
     throw new Error("Not signed in");
   }
 
-  return { Authorization: `Bearer ${session.access_token}` };
+  return {
+    Authorization: `Bearer ${session.access_token}`,
+  };
 }
 
 function requestFailure(err) {
