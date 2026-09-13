@@ -120,6 +120,13 @@ async def send_message(
             status_code=404,
             detail="Session not found. Start a new tutoring session.",
         )
+
+    if state["is_complete"]:
+        raise HTTPException(
+            status_code=409,
+            detail="This tutoring session is complete. Start a new session.",
+    )
+
     state["current_turn_id"] = turn_key
     state["last_student_message"] = req.message
 
