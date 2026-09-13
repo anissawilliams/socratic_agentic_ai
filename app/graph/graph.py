@@ -1,7 +1,8 @@
 from langgraph.graph import END, START, StateGraph
 
-from app.graph.nodes.choose_next_move import choose_next_move_node
-from app.graph.nodes.evaluate_response import evaluate_student_response
+from app.graph.nodes.choose_next_move import (
+    choose_next_move_node,
+)
 from app.graph.nodes.generate_response import generate_response
 from app.graph.nodes.log_event import log_event
 from app.graph.nodes.select_phase import select_phase
@@ -10,11 +11,6 @@ from app.graph.state import TutorState
 
 def build_graph():
     graph = StateGraph(TutorState)
-
-    graph.add_node(
-        "evaluate_response",
-        evaluate_student_response,
-    )
 
     graph.add_node(
         "choose_next_move",
@@ -38,11 +34,6 @@ def build_graph():
 
     graph.add_edge(
         START,
-        "evaluate_response",
-    )
-
-    graph.add_edge(
-        "evaluate_response",
         "choose_next_move",
     )
 

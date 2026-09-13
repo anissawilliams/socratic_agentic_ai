@@ -23,12 +23,13 @@ def generate_dialectic_response(state: TutorState) -> AIMessage:
             DIALECTIC_PROMPT,
             messages,
             route_decision=route_decision,
-            evaluation=state["response_evaluation"],
         ),
         run_name="dialectic",
         metadata={
-            "socratic_phase": "dialectic",
-            "routing_action": route_decision.action,
-            "routing_target": route_decision.target,
-        },
+                "socratic_phase": route_decision.next_phase.value,
+                "routing_action": route_decision.action,
+                "routing_topic": route_decision.topic,
+                "routing_move_type": route_decision.move_type,
+                "routing_target": route_decision.target,
+},
     )

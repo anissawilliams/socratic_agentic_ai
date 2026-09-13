@@ -1,20 +1,21 @@
 from app.graph.state import TutorState
+from app.models.routing import RoutingRecord
 
 
 def select_phase(state: TutorState) -> dict:
-    """Apply the router's selected Socratic phase to the tutor state."""
+    """Validate and apply the router's proposed decision."""
 
     current_phase = state["current_phase"]
     route_decision = state["route_decision"]
 
     if current_phase is None:
         raise ValueError(
-            "Cannot select a phase without an active Socratic phase."
+            "Cannot select a phase without an active phase."
         )
 
     if route_decision is None:
         raise ValueError(
-            "Cannot select a phase without a route decision."
+            "Cannot select a phase without a routing decision."
         )
 
     next_phase = route_decision.next_phase
@@ -27,12 +28,25 @@ def select_phase(state: TutorState) -> dict:
     else:
         expected_action = "switch"
 
+    corrected_decision = route_decision.model_copy(
+        update={
+            "action": expected_action,
+        }
+    )
+
+    routing_record = RoutingRecord(
+        phase=next_phase,
+        topic=corrected_decision.topic,
+        move_type=corrected_decision.move_type,
+        target=corrected_decision.target,
+    )
+
     updates: dict = {
-        # Do not trust the model to label the transition correctly.
-        # The application derives it deterministically.
-        "route_decision": route_decision.model_copy(
-            update={"action": expected_action}
-        ),
+        "route_decision": corrected_decision,
+        "routing_history": [
+            *state["routing_history"],
+            routing_record,
+        ],
     }
 
     if next_phase != current_phase:

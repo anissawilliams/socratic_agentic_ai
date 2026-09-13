@@ -3,26 +3,21 @@ from app.graph.state import TutorState
 
 
 def choose_next_move_node(state: TutorState) -> dict:
-    """Choose the pedagogical role for the tutor's next response."""
+    """Select the role and target for the next tutor response."""
 
     current_phase = state["current_phase"]
-    evaluation = state["response_evaluation"]
 
     if current_phase is None:
         raise ValueError(
-            "Cannot choose the next move without an active Socratic phase."
-        )
-
-    if evaluation is None:
-        raise ValueError(
-            "Cannot choose the next move without a response evaluation."
+            "Cannot choose a move without an active Socratic phase."
         )
 
     route_decision = choose_next_move(
         messages=state["messages"],
         current_phase=current_phase,
         phase_history=state["phase_history"],
-        evaluation=evaluation,
+        routing_history=state["routing_history"],
+        last_student_message=state["last_student_message"],
     )
 
     return {

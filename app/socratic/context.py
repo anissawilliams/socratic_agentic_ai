@@ -3,8 +3,6 @@
 from collections.abc import Sequence
 
 from langchain_core.messages import AIMessage, BaseMessage
-
-from app.models.evaluation import ResponseEvaluation
 from app.models.routing import RouteDecision
 from app.socratic.phases import SocraticPhase
 
@@ -78,59 +76,44 @@ def phase_context(messages: Sequence[BaseMessage]) -> str:
 
 def assigned_move_context(
     route_decision: RouteDecision | None,
-    evaluation: ResponseEvaluation | None,
 ) -> str:
-    """Describe the router-assigned move without exposing it as dialogue."""
+    """Describe the router-assigned move."""
 
     if route_decision is None:
         return (
-            "No routing decision was supplied. Ask one focused question "
-            "grounded in the learner's latest contribution."
+            "No routing decision was supplied. Ask one focused "
+            "question grounded in the learner's latest contribution."
         )
 
     lines = [
         "Assigned move:",
         f"- Selected role: {route_decision.next_phase.value}",
+        f"- Topic: {route_decision.topic}",
+        f"- Move type: {route_decision.move_type}",
         f"- Target: {route_decision.target}",
     ]
 
-    if evaluation is not None:
-        if evaluation.unresolved_issue:
-            lines.append(
-                f"- Unresolved issue: {evaluation.unresolved_issue}"
-            )
-
-        if evaluation.follow_up_target:
-            lines.append(
-                f"- Evaluator follow-up target: "
-                f"{evaluation.follow_up_target}"
-            )
-
-    avoid_repeating: list[str] = []
-
-    if evaluation is not None:
-        avoid_repeating.extend(evaluation.avoid_repeating)
-
-    avoid_repeating.extend(route_decision.avoid_repeating)
-    avoid_repeating = list(dict.fromkeys(avoid_repeating))
-
-    if avoid_repeating:
+    if route_decision.avoid_repeating:
         lines.append("- Do not repeat:")
-
         lines.extend(
             f"  - {item}"
-            for item in avoid_repeating
+            for item in route_decision.avoid_repeating
         )
 
-    lines.extend(
+        lines.extend(
         [
             "",
             "Carry out the selected role only in service of the "
             "assigned target.",
-            "Do not independently switch to a different issue merely "
-            "because it seems more salient.",
-            "Ask one focused question that moves the current inquiry "
-            "forward.",
+            "Begin directly with the focused question or concrete "
+            "case.",
+            'Never begin with "You mentioned", "You highlighted", '
+            '"You pointed out", "You noted", "It sounds like", '
+            '"It seems", or an appraisal of the learner.',
+            "Do not summarize the learner's preceding response "
+            "before asking the question.",
+            "Do not praise or evaluate the learner.",
+            "Ask no more than one focused question.",
         ]
     )
 
@@ -142,39 +125,39 @@ def system_prompt(
     messages: Sequence[BaseMessage],
     *,
     route_decision: RouteDecision | None = None,
-    evaluation: ResponseEvaluation | None = None,
 ) -> str:
-    """Combine role instructions, dialogue history, and the assigned move."""
+    """Combine role instructions, history, and assigned move."""
 
     return (
         f"{role_prompt}\n\n"
         f"{phase_context(messages)}\n\n"
-        f"{assigned_move_context(route_decision, evaluation)}"
+        f"{assigned_move_context(route_decision)}"
     )
-
 
 def maieutics_system_prompt(
     messages: Sequence[BaseMessage],
     *,
     last_student_message: str,
     route_decision: RouteDecision | None = None,
-    evaluation: ResponseEvaluation | None = None,
 ) -> str:
-    """Build Maieutics instructions grounded in the latest contribution."""
+    """Build Maieutics instructions from the assigned move."""
 
-    from app.socratic.prompts.maieutics import MAIEUTICS_PROMPT
+    from app.socratic.prompts.maieutics import (
+        MAIEUTICS_PROMPT,
+    )
 
     latest = " ".join(last_student_message.split())
 
+    base_prompt = system_prompt(
+        MAIEUTICS_PROMPT,
+        messages,
+        route_decision=route_decision,
+    )
+
     return (
-        f"{system_prompt(
-            MAIEUTICS_PROMPT,
-            messages,
-            route_decision=route_decision,
-            evaluation=evaluation,
-        )}\n\n"
+        f"{base_prompt}\n\n"
         "Latest learner contribution:\n"
         f'  "{latest}"\n\n'
-        "Develop the assigned target from what the learner is actually "
-        "expressing. Do not infer agreement merely from brevity."
+        "Develop the assigned target from what the learner is "
+        "actually expressing. Do not infer agreement from brevity."
     )

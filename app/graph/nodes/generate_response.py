@@ -22,7 +22,6 @@ def generate_response(state: TutorState) -> dict:
 
     current_phase = state["current_phase"]
     route_decision = state["route_decision"]
-    evaluation = state["response_evaluation"]
 
     if current_phase is None:
         raise ValueError(
@@ -32,11 +31,6 @@ def generate_response(state: TutorState) -> dict:
     if route_decision is None:
         raise ValueError(
             "Cannot generate a response without a routing decision."
-        )
-
-    if evaluation is None:
-        raise ValueError(
-            "Cannot generate a response without a response evaluation."
         )
 
     if route_decision.next_phase != current_phase:

@@ -11,39 +11,82 @@ RoutingAction = Literal[
     "revisit",
 ]
 
+MoveType = Literal[
+    "clarify",
+    "probe_reason",
+    "examine_evidence",
+    "develop_idea",
+    "test_limit",
+    "apply_case",
+    "compare",
+    "synthesize",
+    "scaffold",
+]
 
-class RouteDecision(BaseModel):
-    action: RoutingAction = Field(
+
+class RoutingRecord(BaseModel):
+    """One accepted routing decision retained in session memory."""
+
+    phase: SocraticPhase
+
+    topic: str = Field(
         description=(
-            "Stay in the current role, switch to a different role, "
-            "or revisit a role used earlier in the dialogue."
+            "Short stable label for the substantive topic, such as "
+            "'verification_requirements' or 'citation_quality'."
         )
     )
 
-    next_phase: SocraticPhase = Field(
+    move_type: MoveType
+
+    target: str = Field(
         description=(
-            "The Socratic role best suited to the next conversational move."
+            "The precise intellectual target assigned to the tutor."
+        )
+    )
+
+
+class RouteDecision(BaseModel):
+    """The router's proposed next conversational move."""
+
+    action: RoutingAction = Field(
+        description=(
+            "Stay in the current role, switch to a new role, or revisit "
+            "a role used earlier. Application code verifies this value."
+        )
+    )
+
+    next_phase: SocraticPhase
+
+    topic: str = Field(
+        description=(
+            "A short stable semantic label for the topic being pursued. "
+            "Reuse an existing topic label when returning to that topic."
+        )
+    )
+
+    move_type: MoveType = Field(
+        description=(
+            "The specific conversational operation the tutor should perform."
         )
     )
 
     target: str = Field(
         description=(
-            "The specific claim, reason, evidence, assumption, distinction, "
-            "implication, or application that the next response should examine."
+            "A precise, grounded description of what the next tutor response "
+            "should help the learner examine, develop, test, or apply."
         )
     )
 
     reasoning_summary: str = Field(
         description=(
-            "A concise, auditable explanation of why this role and target "
-            "are appropriate, grounded in the dialogue and evaluation."
+            "A concise internal explanation grounded in the dialogue."
         )
     )
 
     avoid_repeating: list[str] = Field(
         default_factory=list,
         description=(
-            "Questions, issues, or requests already addressed that the "
-            "next response must not repeat."
+            "Previously answered questions, established points, or semantic "
+            "targets that the tutor must not request again."
         ),
     )

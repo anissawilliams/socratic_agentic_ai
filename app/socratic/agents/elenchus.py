@@ -23,12 +23,13 @@ def generate_elenchus_response(state: TutorState) -> AIMessage:
             ELENCHUS_PROMPT,
             messages,
             route_decision=route_decision,
-            evaluation=state["response_evaluation"],
         ),
         run_name="elenchus",
         metadata={
-            "socratic_phase": "elenchus",
+            "socratic_phase": route_decision.next_phase.value,
             "routing_action": route_decision.action,
+            "routing_topic": route_decision.topic,
+            "routing_move_type": route_decision.move_type,
             "routing_target": route_decision.target,
         },
     )

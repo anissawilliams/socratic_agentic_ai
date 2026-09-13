@@ -1,12 +1,10 @@
-from typing import Annotated, TypedDict
-
 from enum import Enum
+from typing import Annotated, TypedDict
 
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
-from app.models.evaluation import ResponseEvaluation
-from app.models.routing import RouteDecision
+from app.models.routing import RouteDecision, RoutingRecord
 from app.persistence.events import EventType
 from app.socratic.phases import SocraticPhase
 
@@ -20,7 +18,10 @@ class TutorState(TypedDict):
     session_id: str
     participant_id: str
 
-    messages: Annotated[list[BaseMessage], add_messages]
+    messages: Annotated[
+        list[BaseMessage],
+        add_messages,
+    ]
 
     tutor_condition: TutorCondition | None
 
@@ -28,15 +29,12 @@ class TutorState(TypedDict):
     previous_phase: SocraticPhase | None
     phase_history: list[SocraticPhase]
 
-    response_evaluation: ResponseEvaluation | None
     route_decision: RouteDecision | None
+    routing_history: list[RoutingRecord]
 
     pending_event: EventType | None
     current_turn_id: str | None
     last_student_message: str
-
-    # Retained while the current routing implementation is migrated.
-    next_action: str | None
 
     is_complete: bool
     completed_at: str | None

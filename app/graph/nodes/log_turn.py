@@ -22,11 +22,6 @@ def log_turn(state: TutorState) -> dict:
         data={
             "current_phase": _value(state.get("current_phase")),
             "previous_phase": _value(state.get("previous_phase")),
-            "response_evaluation": (
-                evaluation.model_dump()
-                if evaluation is not None
-                else None
-            ),
             "student_message": state["last_student_message"],
             "tutor_response": tutor_response,
             "tutor_condition": _value(state.get("tutor_condition")),
