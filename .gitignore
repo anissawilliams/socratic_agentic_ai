@@ -21,3 +21,7 @@ Thumbs.db
 *.db
 *.sql
 .langgraph_api/
+scripts/inputs/
+scripts/outputs/
+*.roster.csv
+*access_codes.csv

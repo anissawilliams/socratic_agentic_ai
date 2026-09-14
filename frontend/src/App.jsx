@@ -6,9 +6,11 @@ import TutorApp from "./TutorApp";
 import { supabase } from "./api/supabase";
 import { getParticipant } from "./api/authClient";
 
+
 const DEV_AUTH_BYPASS =
   import.meta.env.DEV &&
   import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
+
 
 function App() {
   const [session, setSession] = useState(null);
@@ -30,7 +32,8 @@ function App() {
         } catch {
           if (active) {
             setAuthError(
-              "Could not load the development participant. Check the backend bypass settings and enrollment."
+              "Could not load the development participant. " +
+              "Check the backend bypass settings and enrollment."
             );
           }
         } finally {
@@ -47,10 +50,23 @@ function App() {
       };
     }
 
+    let active = true;
+
     const loadAuth = async () => {
       const {
         data: { session },
+        error,
       } = await supabase.auth.getSession();
+
+      if (!active) {
+        return;
+      }
+
+      if (error) {
+        setAuthError("Could not restore the study session.");
+        setAuthLoaded(true);
+        return;
+      }
 
       setSession(session);
 
@@ -60,13 +76,27 @@ function App() {
             session.access_token
           );
 
-          setParticipant(participant);
-        } catch {
-          setAuthError("You are not authorized to access this study.");
+          if (active) {
+            setParticipant(participant);
+          }
+        } catch (error) {
+          if (active) {
+            setParticipant(null);
+
+            // 403 is expected for an authenticated anonymous
+            // user who has not claimed a participant code yet.
+            if (error?.response?.status !== 403) {
+              setAuthError(
+                "Could not restore the study participant."
+              );
+            }
+          }
         }
       }
 
-      setAuthLoaded(true);
+      if (active) {
+        setAuthLoaded(true);
+      }
     };
 
     loadAuth();
@@ -74,28 +104,22 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      (event, newSession) => {
+        if (!active) {
+          return;
+        }
+
         setSession(newSession);
-        setParticipant(null);
         setAuthError(null);
 
-        if (newSession) {
-          try {
-            const participant = await getParticipant(
-              newSession.access_token
-            );
-
-            setParticipant(participant);
-          } catch {
-            setAuthError(
-              "You are not authorized to access this study."
-            );
-          }
+        if (event === "SIGNED_OUT" || !newSession) {
+          setParticipant(null);
         }
       }
     );
 
     return () => {
+      active = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -104,12 +128,20 @@ function App() {
     return null;
   }
 
-    if (!session && !DEV_AUTH_BYPASS) {
-    return <Auth />;
-  }
-
   if (authError) {
     return <p>{authError}</p>;
+  }
+
+  if (!participant && !DEV_AUTH_BYPASS) {
+    return (
+      <Auth
+        session={session}
+        onAuthenticated={(participant) => {
+          setParticipant(participant);
+          setAuthError(null);
+        }}
+      />
+    );
   }
 
   if (!participant) {
@@ -118,5 +150,6 @@ function App() {
 
   return <TutorApp />;
 }
+
 
 export default App;
