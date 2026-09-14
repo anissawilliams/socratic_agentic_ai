@@ -10,6 +10,7 @@ from app.graph.graph import tutor_graph
 from app.graph.state import TutorState, TutorCondition
 from app.services.condition import tutor_condition_for_participant
 from app.socratic.phases import SocraticPhase
+from app.persistence.sessions import save_session, load_session
 
 
 router = APIRouter()
@@ -88,7 +89,7 @@ async def start_session(
 
     state["messages"] = [AIMessage(content=opening_line)]
 
-    _sessions[session_key] = state
+    save_session(state)
 
     return TutorMessageResponse(
         session_id=session_id,
@@ -112,6 +113,12 @@ async def send_message(
     turn_key = str(turn_id)
 
     state = _sessions.get(session_key)
+
+    if state is None:
+        state = load_session(session_key)
+
+        if state is not None:
+            _sessions[session_key] = state
 
     # Someone else's session is reported as missing rather than forbidden, so a
     # guessed session ID cannot be used to confirm that a session exists.
@@ -139,6 +146,7 @@ async def send_message(
 
     result = tutor_graph.invoke(state)
 
+    save_session(result)
     _sessions[session_key] = result
 
     # Return only messages generated during this graph invocation.
