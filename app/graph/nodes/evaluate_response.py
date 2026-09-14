@@ -1,17 +1,23 @@
-from app.models.evaluation import ResponseEvaluation, ResponseType
+from app.graph.evaluate.evaluator import evaluate_response
 from app.graph.state import TutorState
+from app.content.scenarios import load_scenario
 
 
-
-
-# TODO: Replace this with an LLM-based response evaluator/judge.
 def evaluate_student_response(state: TutorState) -> dict:
-    """
-    Temporary stub.
+    current_phase = state["current_phase"]
+    scenario = load_scenario()
+    session_goal = scenario.learning_objective
 
-    The previous deterministic response heuristics have been removed.
-    This node will be replaced by the LLM-based response evaluator/judge.
-    """
-    return {
-        "response_evaluation": None,
-    }
+    if current_phase is None:
+        raise ValueError(
+            "Cannot evaluate a student response without an active Socratic phase."
+        )
+
+    evaluation = evaluate_response(
+        messages=state["messages"],
+        current_phase=current_phase,
+        last_student_message=state["last_student_message"],
+        session_goal=session_goal,
+)
+
+    return {"response_evaluation": evaluation}

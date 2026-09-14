@@ -1,21 +1,17 @@
-"""Label tutor turns with the role that produced them.
-
-The transcript alone does not say which role said what, so every agent used to
-re-read the same flat history, independently pick the most salient move, and
-land on the move a previous phase had already made. Labelling past turns is what
-lets a role see that its move has already been spent.
-"""
+"""Build role-specific context for Socratic tutor responses."""
 
 from collections.abc import Sequence
+
 from langchain_core.messages import AIMessage, BaseMessage
+from app.models.routing import RouteDecision
 from app.socratic.phases import SocraticPhase
+
 
 PHASE_KEY = "socratic_phase"
 OPENING_LABEL = "opening question"
 
-# Long enough to identify the move that was made, short enough to keep the
-# system prompt from competing with the transcript for attention.
-_QUOTE_LIMIT = 240
+_QUOTE_LIMIT = 200
+_MOVE_HISTORY_LIMIT = 12
 
 
 def tag_phase(message: AIMessage, phase: SocraticPhase) -> AIMessage:
@@ -25,66 +21,143 @@ def tag_phase(message: AIMessage, phase: SocraticPhase) -> AIMessage:
 
 
 def phase_of(message: BaseMessage) -> str:
-    """The role behind a tutor message, or the opening if it was scripted."""
+    """Return the role behind a tutor message."""
     return message.additional_kwargs.get(PHASE_KEY, OPENING_LABEL)
 
 
 def _quote(text: str) -> str:
     collapsed = " ".join(text.split())
+
     if len(collapsed) <= _QUOTE_LIMIT:
         return collapsed
+
     return f"{collapsed[:_QUOTE_LIMIT].rstrip()}…"
 
 
 def phase_context(messages: Sequence[BaseMessage]) -> str:
-    """Describe the tutor moves already made, for inclusion in a system prompt."""
-    tutor_turns = [m for m in messages if isinstance(m, AIMessage)]
+    """Describe recent tutor moves so the next response does not repeat them."""
+
+    tutor_turns = [
+        message
+        for message in messages
+        if isinstance(message, AIMessage)
+    ]
 
     if not tutor_turns:
         return (
-            "No tutor move has been made yet. The learner is responding to the "
-            "opening question."
+            "No tutor move has been made yet. The learner is responding "
+            "to the opening question."
         )
 
+    recent_turns = tutor_turns[-_MOVE_HISTORY_LIMIT:]
+    first_number = len(tutor_turns) - len(recent_turns) + 1
+
     lines = [
-        f"  {index}. {phase_of(message)}: \"{_quote(str(message.content))}\""
-        for index, message in enumerate(tutor_turns, start=1)
+        (
+            f'  {index}. {phase_of(message)}: '
+            f'"{_quote(str(message.content))}"'
+        )
+        for index, message in enumerate(
+            recent_turns,
+            start=first_number,
+        )
     ]
 
-    spoken = sorted({phase_of(m) for m in tutor_turns} - {OPENING_LABEL})
-    already = ", ".join(spoken) if spoken else "none yet"
-
     return (
-        "Tutor moves already made in this dialogue:\n"
+        "Recent tutor moves:\n"
         + "\n".join(lines)
-        + f"\n\nRoles that have already spoken: {already}.\n"
-        "Do not repeat a move listed above. If the question you were about to "
-        "ask has effectively been asked already, it is not your move to make — "
-        "find the question that belongs to your role and has not been asked."
+        + "\n\nA Socratic role may be used more than once and may be "
+        "revisited after another role. Reusing a role is appropriate only "
+        "when it pursues a new, grounded target or meaningfully deepens the "
+        "existing inquiry. Do not repeat a substantive question that the "
+        "learner has already answered."
     )
 
 
-def system_prompt(role_prompt: str, messages: Sequence[BaseMessage]) -> str:
-    """Combine a role's standing instructions with what has happened so far."""
-    return f"{role_prompt}\n\n{phase_context(messages)}"
+def assigned_move_context(
+    route_decision: RouteDecision | None,
+) -> str:
+    """Describe the router-assigned move."""
 
+    if route_decision is None:
+        return (
+            "No routing decision was supplied. Ask one focused "
+            "question grounded in the learner's latest contribution."
+        )
+
+    lines = [
+        "Assigned move:",
+        f"- Selected role: {route_decision.next_phase.value}",
+        f"- Topic: {route_decision.topic}",
+        f"- Move type: {route_decision.move_type}",
+        f"- Target: {route_decision.target}",
+    ]
+
+    if route_decision.avoid_repeating:
+        lines.append("- Do not repeat:")
+        lines.extend(
+            f"  - {item}"
+            for item in route_decision.avoid_repeating
+        )
+
+        lines.extend(
+        [
+            "",
+            "Carry out the selected role only in service of the "
+            "assigned target.",
+            "Begin directly with the focused question or concrete "
+            "case.",
+            'Never begin with "You mentioned", "You highlighted", '
+            '"You pointed out", "You noted", "It sounds like", '
+            '"It seems", or an appraisal of the learner.',
+            "Do not summarize the learner's preceding response "
+            "before asking the question.",
+            "Do not praise or evaluate the learner.",
+            "Ask no more than one focused question.",
+        ]
+    )
+
+    return "\n".join(lines)
+
+
+def system_prompt(
+    role_prompt: str,
+    messages: Sequence[BaseMessage],
+    *,
+    route_decision: RouteDecision | None = None,
+) -> str:
+    """Combine role instructions, history, and assigned move."""
+
+    return (
+        f"{role_prompt}\n\n"
+        f"{phase_context(messages)}\n\n"
+        f"{assigned_move_context(route_decision)}"
+    )
 
 def maieutics_system_prompt(
     messages: Sequence[BaseMessage],
     *,
     last_student_message: str,
+    route_decision: RouteDecision | None = None,
 ) -> str:
-    """Build Maieutics system instructions without interpreting learner intent."""
-    from app.socratic.prompts.maieutics import MAIEUTICS_PROMPT
+    """Build Maieutics instructions from the assigned move."""
+
+    from app.socratic.prompts.maieutics import (
+        MAIEUTICS_PROMPT,
+    )
 
     latest = " ".join(last_student_message.split())
 
+    base_prompt = system_prompt(
+        MAIEUTICS_PROMPT,
+        messages,
+        route_decision=route_decision,
+    )
+
     return (
-        f"{MAIEUTICS_PROMPT}\n\n"
-        f"{phase_context(messages)}\n\n"
+        f"{base_prompt}\n\n"
         "Latest learner contribution:\n"
         f'  "{latest}"\n\n'
-        "The dialogue has entered the Maieutics phase. Continue from what the "
-        "learner is actually expressing here. Do not infer agreement merely "
-        "from brevity, and do not reopen earlier phases."
+        "Develop the assigned target from what the learner is "
+        "actually expressing. Do not infer agreement from brevity."
     )

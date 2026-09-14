@@ -1,16 +1,19 @@
-from typing import Annotated, TypedDict
 from enum import Enum
+from typing import Annotated, TypedDict
+
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
-from app.socratic.phases import SocraticPhase
-from app.models.evaluation import ResponseEvaluation
-from app.persistence.events import EventType
 
+from app.models.routing import RouteDecision, RoutingRecord
+from app.persistence.events import EventType
+from app.socratic.phases import SocraticPhase
+
+from app.models.evaluation import ResponseEvaluation
 
 class TutorCondition(str, Enum):
-    SOCRATIC = "socratic"   # Default
-    SCAFFOLDED = "scaffolded"
+    SOCRATIC = "socratic"
     DIRECT_CHAT = "direct_chat"
+
 
 class TutorState(TypedDict):
     session_id: str
@@ -19,12 +22,12 @@ class TutorState(TypedDict):
     tutor_condition: TutorCondition | None
     current_phase: SocraticPhase | None
     previous_phase: SocraticPhase | None
+    phase_history: list[SocraticPhase]
+    route_decision: RouteDecision | None
+    routing_history: list[RoutingRecord]
+    response_evaluation: ResponseEvaluation | None
     pending_event: EventType | None
-    phase_attempt_count: int
-    phase_turns_taken: int
     current_turn_id: str | None
     last_student_message: str
-    response_evaluation: ResponseEvaluation | None
-    next_action: str | None
     is_complete: bool
     completed_at: str | None

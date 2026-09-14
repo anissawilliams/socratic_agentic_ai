@@ -1,13 +1,17 @@
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 
-from app.graph.state import TutorState
-from app.graph.routing import route_after_phase_selection
-
-from app.graph.nodes.evaluate_response import evaluate_student_response
-from app.graph.nodes.select_phase import select_phase
-from app.graph.nodes.generate_response import generate_response
+from app.graph.nodes.choose_next_move import (
+    choose_next_move_node,
+)
 from app.graph.nodes.complete_session import complete_session
+from app.graph.nodes.evaluate_response import (
+    evaluate_student_response,
+)
+from app.graph.nodes.generate_response import generate_response
 from app.graph.nodes.log_event import log_event
+from app.graph.nodes.select_phase import select_phase
+from app.graph.routing import route_after_evaluation
+from app.graph.state import TutorState
 
 
 def build_graph():
@@ -16,6 +20,11 @@ def build_graph():
     graph.add_node(
         "evaluate_response",
         evaluate_student_response,
+    )
+
+    graph.add_node(
+        "choose_next_move",
+        choose_next_move_node,
     )
 
     graph.add_node(
@@ -33,14 +42,8 @@ def build_graph():
         complete_session,
     )
 
-    # Same logging implementation, invoked at different workflow points.
     graph.add_node(
-        "log_turn",
-        log_event,
-    )
-
-    graph.add_node(
-        "log_session_complete",
+        "log_event",
         log_event,
     )
 
@@ -49,39 +52,37 @@ def build_graph():
         "evaluate_response",
     )
 
-    graph.add_edge(
-        "evaluate_response",
-        "select_phase",
-    )
-
     graph.add_conditional_edges(
-        "select_phase",
-        route_after_phase_selection,
+        "evaluate_response",
+        route_after_evaluation,
         {
-            "generate_response": "generate_response",
             "complete_session": "complete_session",
+            "choose_next_move": "choose_next_move",
         },
     )
 
-    # Normal Socratic turn
+    graph.add_edge(
+        "choose_next_move",
+        "select_phase",
+    )
+
+    graph.add_edge(
+        "select_phase",
+        "generate_response",
+    )
+
     graph.add_edge(
         "generate_response",
-        "log_turn",
+        "log_event",
     )
 
-    graph.add_edge(
-        "log_turn",
-        END,
-    )
-
-    # Session completion. No closing tutor message is generated.
     graph.add_edge(
         "complete_session",
-        "log_session_complete",
+        "log_event",
     )
 
     graph.add_edge(
-        "log_session_complete",
+        "log_event",
         END,
     )
 

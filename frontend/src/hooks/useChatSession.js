@@ -1,8 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import {
   startSession as apiStartSession,
   sendMessage as apiSendMessage,
 } from "../api/chatClient";
+
+
+const STORAGE_KEY = "socratic_tutor_session";
+
+
+function loadStoredSession() {
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+
+    if (!stored) {
+      return null;
+    }
+
+    return JSON.parse(stored);
+  } catch {
+    sessionStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
 
 
 function failureMessage(err) {
@@ -15,7 +35,7 @@ function failureMessage(err) {
   }
 
   if (err.status === 404) {
-    return "This session is no longer on the server, which happens when the backend restarts. Start a new session to continue.";
+    return "This tutoring session could not be found. Start a new session to continue.";
   }
 
   if (err.status >= 500) {
@@ -25,6 +45,7 @@ function failureMessage(err) {
   return `The tutor rejected the request (status ${err.status}).`;
 }
 
+
 function logFailure(action, err) {
   console.error(
     `${action} failed — status ${err.status ?? "no response"}:`,
@@ -33,30 +54,78 @@ function logFailure(action, err) {
   );
 }
 
+
 export function useChatSession() {
-  const [sessionId, setSessionId] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [phase, setPhase] = useState(null);
-  const [phaseAttemptCount, setPhaseAttemptCount] = useState(0);
-  const [isComplete, setIsComplete] = useState(false);
+  const [storedSession] = useState(() => loadStoredSession());
+
+  const [sessionId, setSessionId] = useState(
+    () => storedSession?.sessionId ?? null
+  );
+
+  const [messages, setMessages] = useState(
+    () => storedSession?.messages ?? []
+  );
+
+  const [phase, setPhase] = useState(
+    () => storedSession?.phase ?? null
+  );
+
+  const [phaseAttemptCount, setPhaseAttemptCount] = useState(
+    () => storedSession?.phaseAttemptCount ?? 0
+  );
+
+  const [isComplete, setIsComplete] = useState(
+    () => storedSession?.isComplete ?? false
+  );
+
   const [isWaiting, setIsWaiting] = useState(false);
 
 
+  useEffect(() => {
+    if (!sessionId) {
+      return;
+    }
+
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        sessionId,
+        messages,
+        phase,
+        phaseAttemptCount,
+        isComplete,
+      })
+    );
+  }, [
+    sessionId,
+    messages,
+    phase,
+    phaseAttemptCount,
+    isComplete,
+  ]);
+
+
   const startSession = async () => {
+    if (sessionId) {
+      return;
+    }
+
     setIsWaiting(true);
 
     try {
       const data = await apiStartSession();
 
       setSessionId(data.session_id);
+
       setMessages([
         {
           role: "tutor",
           content: data.message,
         },
       ]);
+
       setPhase(data.current_phase);
-      setPhaseAttemptCount(data.phase_attempt_count);
+      setPhaseAttemptCount(data.phase_attempt_count ?? 0);
       setIsComplete(data.is_complete);
     } catch (err) {
       logFailure("Starting a session", err);
@@ -89,7 +158,10 @@ export function useChatSession() {
     setIsWaiting(true);
 
     try {
-      const data = await apiSendMessage(sessionId, text);
+      const data = await apiSendMessage(
+        sessionId,
+        text
+      );
 
       if (data.message) {
         setMessages((prev) => [
@@ -102,7 +174,9 @@ export function useChatSession() {
       }
 
       setPhase(data.current_phase);
-      setPhaseAttemptCount(data.phase_attempt_count);
+      setPhaseAttemptCount(
+        data.phase_attempt_count ?? 0
+      );
       setIsComplete(data.is_complete);
     } catch (err) {
       logFailure("Sending a message", err);
@@ -121,13 +195,43 @@ export function useChatSession() {
 
 
   const resetSession = async () => {
+    sessionStorage.removeItem(STORAGE_KEY);
+
     setSessionId(null);
     setMessages([]);
     setPhase(null);
     setPhaseAttemptCount(0);
     setIsComplete(false);
 
-    await startSession();
+    setIsWaiting(true);
+
+    try {
+      const data = await apiStartSession();
+
+      setSessionId(data.session_id);
+
+      setMessages([
+        {
+          role: "tutor",
+          content: data.message,
+        },
+      ]);
+
+      setPhase(data.current_phase);
+      setPhaseAttemptCount(data.phase_attempt_count ?? 0);
+      setIsComplete(data.is_complete);
+    } catch (err) {
+      logFailure("Starting a session", err);
+
+      setMessages([
+        {
+          role: "tutor",
+          content: failureMessage(err),
+        },
+      ]);
+    } finally {
+      setIsWaiting(false);
+    }
   };
 
 

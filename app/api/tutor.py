@@ -10,6 +10,7 @@ from app.graph.graph import tutor_graph
 from app.graph.state import TutorState, TutorCondition
 from app.services.condition import tutor_condition_for_participant
 from app.socratic.phases import SocraticPhase
+from app.persistence.sessions import save_session, load_session
 
 
 router = APIRouter()
@@ -27,7 +28,6 @@ class TutorMessageResponse(BaseModel):
     current_turn_id: UUID | None
     message: str
     current_phase: str | None
-    phase_attempt_count: int
     is_complete: bool
 
 
@@ -35,27 +35,27 @@ def _new_session_state(
     session_id: str,
     participant: dict,
 ) -> TutorState:
+    initial_phase = SocraticPhase.ELENCHUS
+
     return {
         "session_id": session_id,
         "participant_id": str(participant["id"]),
         "messages": [],
-        "tutor_condition": tutor_condition_for_participant(participant),
+        "tutor_condition": tutor_condition_for_participant(
+            participant
+        ),
         "current_turn_id": None,
-        "current_phase": SocraticPhase.ELENCHUS,
+        "current_phase": initial_phase,
         "previous_phase": None,
-        "phase_attempt_count": 0,
-        "phase_turns_taken": 0,
-        "last_student_message": "",
-
-        "response_evaluation": None,
-
+        "phase_history": [initial_phase],
+        "route_decision": None,
+        "routing_history": [],
         "pending_event": None,
-
+        "last_student_message": "",
+        "response_evaluation": None,
         "is_complete": False,
         "completed_at": None,
     }
-
-
 @router.get(
     "/tutor/start",
     response_model=TutorMessageResponse,
@@ -89,14 +89,13 @@ async def start_session(
 
     state["messages"] = [AIMessage(content=opening_line)]
 
-    _sessions[session_key] = state
+    save_session(state)
 
     return TutorMessageResponse(
         session_id=session_id,
         message=opening_line,
         current_phase=state["current_phase"].value,
         current_turn_id=state["current_turn_id"],
-        phase_attempt_count=state["phase_attempt_count"],
         is_complete=state["is_complete"],
     )
 
@@ -115,6 +114,12 @@ async def send_message(
 
     state = _sessions.get(session_key)
 
+    if state is None:
+        state = load_session(session_key)
+
+        if state is not None:
+            _sessions[session_key] = state
+
     # Someone else's session is reported as missing rather than forbidden, so a
     # guessed session ID cannot be used to confirm that a session exists.
     if state is None or state["participant_id"] != str(participant["id"]):
@@ -122,6 +127,13 @@ async def send_message(
             status_code=404,
             detail="Session not found. Start a new tutoring session.",
         )
+
+    if state["is_complete"]:
+        raise HTTPException(
+            status_code=409,
+            detail="This tutoring session is complete. Start a new session.",
+    )
+
     state["current_turn_id"] = turn_key
     state["last_student_message"] = req.message
 
@@ -134,11 +146,10 @@ async def send_message(
 
     result = tutor_graph.invoke(state)
 
+    save_session(result)
     _sessions[session_key] = result
 
-    # The turn that completes the session generates no tutor message, so the
-    # last message is the learner's own. Returning it would echo the previous
-    # tutor turn back as though it were new.
+    # Return only messages generated during this graph invocation.
     generated = result["messages"][messages_before:]
     tutor_message = generated[-1].content if generated else ""
 
@@ -153,6 +164,5 @@ async def send_message(
             if current_phase is not None
             else None
         ),
-        phase_attempt_count=result["phase_attempt_count"],
         is_complete=result["is_complete"],
     )
