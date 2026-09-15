@@ -151,7 +151,7 @@ async def send_message(
 
     # Return only messages generated during this graph invocation.
     generated = result["messages"][messages_before:]
-    tutor_message = generated[-1].content if generated else ""
+    tutor_message = generated[-1].text if generated else ""
 
     current_phase = result["current_phase"]
 
