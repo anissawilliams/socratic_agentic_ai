@@ -10,7 +10,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
        "http://localhost:5173",
-       "https://socraticai-production.up.railway.app/"
+       "https://socraticai-production.up.railway.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
