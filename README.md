@@ -25,7 +25,7 @@ The current prototype separates **workflow operations** from **Socratic domain c
 
 Phase-specific generation nodes have been removed. The graph now has one `generate_response` node, and `TutorState.current_phase` determines which specialist Socratic agent handles the turn. Socratic response generation is LLM-backed; deterministic `PHASE_CONTENT` remains temporarily for session initialization and test fixtures.
 
-The application now also includes participant authentication and authorization. Supabase Auth establishes learner identity through passwordless email sign-in, while the backend verifies that the authenticated email belongs to an authorized study participant and retrieves the participant's pre-assigned experimental condition before the tutoring interface is mounted.
+The application also includes participant authentication and authorization. A learner enters their assigned study code, and the backend verifies the code against the participant database before returning the participant's pre-assigned experimental condition and mounting the tutoring interface. Supabase is used only as the application database.
 
 ```mermaid
 flowchart LR
@@ -33,19 +33,17 @@ flowchart LR
 
     subgraph FRONTEND["React / Vite Frontend"]
         APP["App<br/>Authentication Gate"]
-        AUTH["Auth<br/>Magic Link Sign-In"]
+        AUTH["Auth<br/>Study Code Entry"]
         TUTOR["TutorApp<br/>Socratic Tutor UI"]
     end
 
     subgraph SUPABASE["Supabase"]
-        SBAUTH["Supabase Auth<br/>Magic Links · Sessions"]
-        PARTICIPANT["study_participant<br/>email · condition"]
+        PARTICIPANT["study_participant<br/>study code · email · condition"]
     end
 
     subgraph BACKEND["FastAPI Backend"]
         AUTHAPI["Auth API<br/>GET /auth/me"]
         TUTORAPI["Tutor API<br/>/tutor/start · /tutor/message"]
-        AUTHSVC["Auth Service"]
         PARTICIPANTDB["Participant DB Access"]
     end
 
@@ -59,12 +57,10 @@ flowchart LR
     LEARNER --> APP
 
     APP -->|not authenticated| AUTH
-    AUTH -->|magic link| SBAUTH
-    SBAUTH -->|authenticated session| APP
+    AUTH -->|study code| APP
 
-    APP -->|access token| AUTHAPI
-    AUTHAPI --> AUTHSVC
-    AUTHSVC --> PARTICIPANTDB
+    APP -->|X-Participant-Code| AUTHAPI
+    AUTHAPI --> PARTICIPANTDB
     PARTICIPANTDB --> PARTICIPANT
 
     AUTHAPI -->|authorized participant + condition| APP
@@ -319,7 +315,6 @@ socratic_agentic_ai/
 │   │   ├── definitions.py     # Literature-grounded method definitions
 │   │   └── prompts/           # Literature-aligned Socratic agent prompts
 │   ├── services/
-│   │   ├── auth.py            # Participant access business logic
 │   │   ├── assignment.py      # Planned condition-assignment logic
 │   │   ├── llm.py             # LLM client/service
 │   │   └── supabase.py        # Supabase client setup
@@ -331,10 +326,9 @@ socratic_agentic_ai/
 │   └── src/
 │       ├── api/
 │       │   ├── authClient.js  # Backend participant authorization client
-│       │   ├── chatClient.js  # Tutor API client
-│       │   └── supabase.js    # Browser Supabase Auth client
+│       │   └── chatClient.js  # Tutor API client
 │       ├── components/
-│       │   └── Auth.jsx       # Magic-link sign-in UI
+│       │   └── Auth.jsx       # Study-code sign-in UI
 │       ├── App.jsx            # Authentication / authorization gate
 │       └── TutorApp.jsx       # Authenticated Socratic Tutor application
 ├── scripts/
@@ -407,6 +401,22 @@ OPENAI_API_KEY=your_openai_api_key
 ```
 
 Additional environment variables will support Supabase/PostgreSQL persistence and observability as those components are implemented.
+
+### Generate participant study codes
+
+Generate a CSV containing plaintext participant codes and the corresponding
+SHA-256 values for `study_participant.access_code_hash`:
+
+```bash
+python -m scripts.generate_participant_codes \
+  --count 10 \
+  --output participant_codes.csv
+```
+
+The generator runs offline and never modifies Supabase. Keep the CSV secure:
+the plaintext `participant_code` values are login credentials. Copy only each
+hash into its participant row, and distribute the matching plaintext code to
+that participant. The command refuses to overwrite an existing output file.
 
 ### 5. Start the FastAPI backend
 

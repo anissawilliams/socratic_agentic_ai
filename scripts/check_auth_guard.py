@@ -7,12 +7,14 @@ Run: .venv/bin/python -m scripts.check_auth_guard
 """
 
 import sys
+from unittest.mock import patch
 from uuid import uuid4
 
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
 from app.api.auth.dependencies import require_participant
+from app.api.tutor import _sessions
 from app.main import app
 
 REQUIRED_DEPENDENCY = "require_participant"
@@ -60,44 +62,46 @@ cases = [
     ("GET", "/auth/me", None),
 ]
 
-for label, headers in [
-    ("No credentials", {}),
-    ("Bad token", {"Authorization": "Bearer not-a-real-token"}),
-]:
-    print(f"\n{label}:")
-    for method, path, body in cases:
-        response = client.request(method, path, json=body, headers=headers)
-        rejected = response.status_code in (401, 403)
-        print(f"  {method:4} {path:16} -> {response.status_code}")
+with patch(
+    "app.api.auth.dependencies.get_participant_by_study_code",
+    return_value=None,
+):
+    for label, headers in [
+        ("No credentials", {}),
+        ("Bad code", {"X-Participant-Code": "not-a-real-code"}),
+    ]:
+        print(f"\n{label}:")
+        for method, path, body in cases:
+            response = client.request(method, path, json=body, headers=headers)
+            rejected = response.status_code in (401, 403)
+            print(f"  {method:4} {path:16} -> {response.status_code}")
 
-        if not rejected:
-            failures.append(f"{label}: {method} {path} returned {response.status_code}")
+            if not rejected:
+                failures.append(
+                    f"{label}: {method} {path} returned {response.status_code}"
+                )
 
-# A valid token for one participant must not reach another participant's
-# session. Overriding the dependency avoids needing a real magic-link token;
+# A valid code for one participant must not reach another participant's
+# session. Overriding the dependency avoids needing a real study code;
 # neither request below invokes the graph, so no model call is made.
 print("\nCross-participant access:")
 
-app.dependency_overrides[require_participant] = lambda: {"id": "participant-a"}
-started = client.get("/tutor/start")
-print(f"  A starts a session -> {started.status_code}")
+session_id = str(uuid4())
+_sessions[session_id] = {"participant_id": "participant-a"}
 
-if started.status_code != 200:
-    failures.append(f"Authenticated start failed with {started.status_code}")
-else:
-    session_id = started.json()["session_id"]
+app.dependency_overrides[require_participant] = lambda: {"id": "participant-b"}
+intruded = client.post(
+    "/tutor/message",
+    json={"session_id": session_id, "message": "let me in"},
+)
+print(f"  B posts to A's session -> {intruded.status_code}")
 
-    app.dependency_overrides[require_participant] = lambda: {"id": "participant-b"}
-    intruded = client.post(
-        "/tutor/message",
-        json={"session_id": session_id, "message": "let me in"},
+if intruded.status_code != 404:
+    failures.append(
+        f"B reached A's session: expected 404, got {intruded.status_code}"
     )
-    print(f"  B posts to A's session -> {intruded.status_code}")
 
-    if intruded.status_code != 404:
-        failures.append(
-            f"B reached A's session: expected 404, got {intruded.status_code}"
-        )
+_sessions.pop(session_id, None)
 
 app.dependency_overrides.clear()
 

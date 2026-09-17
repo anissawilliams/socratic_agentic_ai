@@ -1,31 +1,19 @@
 import axios from "axios";
 
-import { supabase } from "./supabase";
+import { getStoredParticipantCode } from "./authClient";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-  const DEV_AUTH_BYPASS =
-  import.meta.env.DEV &&
-  import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
-// Read the token per request instead of capturing it once. A tutoring session
-// can outlive a single access token, and supabase-js refreshes it in the
-// background, so asking for the current session avoids sending a stale one.
-async function authHeaders() {
-  if (DEV_AUTH_BYPASS) {
-    return {};
-  }
+function participantHeaders() {
+  const code = getStoredParticipantCode();
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    throw new Error("Not signed in");
+  if (!code) {
+    throw new Error("Participant code is not available");
   }
 
   return {
-    Authorization: `Bearer ${session.access_token}`,
+    "X-Participant-Code": code,
   };
 }
 
@@ -44,7 +32,7 @@ function requestFailure(err) {
 export async function startSession() {
   try {
     const res = await axios.get(`${API_BASE}/tutor/start`, {
-      headers: await authHeaders(),
+      headers: participantHeaders(),
     });
 
     return res.data;
@@ -62,7 +50,7 @@ export async function sendMessage(sessionId, message) {
         message,
       },
       {
-        headers: await authHeaders(),
+        headers: participantHeaders(),
       }
     );
 
