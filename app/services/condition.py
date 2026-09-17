@@ -6,6 +6,7 @@ from app.graph.state import TutorCondition
 # Add new codes here before enrolling participants; unknown codes refuse session start.
 _CONDITION_BY_CODE: dict[str, TutorCondition] = {
     "scenario_questioning": TutorCondition.SOCRATIC,
+    "socratic_questioning": TutorCondition.SOCRATIC,
     "socratic": TutorCondition.SOCRATIC,
     "direct_chat": TutorCondition.DIRECT_CHAT,
 }

@@ -25,3 +25,5 @@ scripts/inputs/
 scripts/outputs/
 *.roster.csv
 *access_codes.csv
+participant_codes*.csv
+participant_code_assignments.csv
