@@ -1,7 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-class ParticipanCodeRequest(BaseModel):
-    code: str = Field(min_length=8, max_length=64)
 
 class ParticipantResponse(BaseModel):
     id: str

@@ -1,10 +1,9 @@
 import { useState } from "react";
 
-import { supabase } from "../api/supabase";
-import { claimParticipantCode } from "../api/authClient";
+import { authenticateParticipant } from "../api/authClient";
 
 
-export default function Auth({ session, onAuthenticated }) {
+export default function Auth({ onAuthenticated }) {
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -16,29 +15,7 @@ export default function Auth({ session, onAuthenticated }) {
     setMessage("");
 
     try {
-      let activeSession = session;
-
-      if (!activeSession) {
-        const { data, error } =
-          await supabase.auth.signInAnonymously();
-
-        if (error) {
-          throw error;
-        }
-
-        activeSession = data.session;
-      }
-
-      if (!activeSession?.access_token) {
-        throw new Error(
-          "Could not create a secure study session."
-        );
-      }
-
-      const participant = await claimParticipantCode(
-        code,
-        activeSession.access_token
-      );
+      const participant = await authenticateParticipant(code);
 
       onAuthenticated(participant);
     } catch (error) {

@@ -1,32 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
-from app.api.auth.dependencies import require_participant, require_auth_user
-from app.api.auth.schemas import ParticipantResponse, ParticipanCodeRequest
-from app.db.participants import claim_participant_by_access_code
+from app.api.auth.dependencies import require_participant
+from app.api.auth.schemas import ParticipantResponse
 
 router = APIRouter(
     prefix="/auth",
     tags=["auth"],
 )
-
-@router.post(
-    "/code",
-    response_model=ParticipantResponse,
-)
-def claim_participant_code(
-    request: ParticipanCodeRequest,
-    user=Depends(require_auth_user),
-) -> dict:
-    try:
-        return claim_participant_by_access_code(
-            request.code,
-            str(user.id),
-        )
-    except (ValueError, PermissionError):
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid or unavailable participant code",
-        ) from None
 
 
 @router.get(
