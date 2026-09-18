@@ -20,6 +20,8 @@ Thumbs.db
 *.sqlite
 *.db
 *.sql
+!migrations/
+!migrations/*.sql
 .langgraph_api/
 scripts/inputs/
 scripts/outputs/
@@ -27,3 +29,4 @@ scripts/outputs/
 *access_codes.csv
 participant_codes*.csv
 participant_code_assignments.csv
+*study_assignments.csv

@@ -164,7 +164,7 @@ flowchart TD
 
     LLM["LLM Service<br/>OpenAI"]
     EVENTS["Event / Session Persistence"]
-    DB["Supabase · PostgreSQL<br/>JSONB research logging"]
+    DB["Supabase · PostgreSQL<br/>relational research logging"]
     OTEL["OpenTelemetry"]
     LS["LangSmith Studio"]
 
@@ -315,7 +315,7 @@ socratic_agentic_ai/
 │   │   ├── definitions.py     # Literature-grounded method definitions
 │   │   └── prompts/           # Literature-aligned Socratic agent prompts
 │   ├── services/
-│   │   ├── assignment.py      # Planned condition-assignment logic
+│   │   ├── assignment.py      # Fail-closed persisted assignment resolver
 │   │   ├── llm.py             # LLM client/service
 │   │   └── supabase.py        # Supabase client setup
 │   ├── persistence/           # Event and session persistence boundaries
@@ -460,8 +460,9 @@ The implementation is intentionally being kept flexible while the research desig
   Define canonical behavior, instructions, and boundaries for each Socratic phase using published research.
 2. **Implement the Socratic agent layer**
   Add the four LLM-backed Socratic agents while preserving the separation between pedagogical behavior and LangGraph orchestration.
-3. **Define and implement the research logging contract**
-  Add preliminary JSONB event logging and determine which interaction, routing, model, prompt, and timing fields must be captured for later analysis.
+3. **Complete the relational research logging migration**
+  Store interaction, routing, evaluation, model, prompt, and timing fields in
+  explicit typed columns and child tables rather than generic JSON payloads.
 4. **Instrument learner interaction**
   Candidate measures include complete conversation logs, timestamps, user response/pondering time, input length, and other interaction-level metrics needed for later analysis.
 5. **Evaluate observability options**

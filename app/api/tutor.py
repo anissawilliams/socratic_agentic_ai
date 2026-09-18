@@ -1,3 +1,6 @@
+from copy import deepcopy
+import logging
+from time import perf_counter
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,11 +12,20 @@ from app.content.scenarios import load_scenario
 from app.graph.graph import tutor_graph
 from app.graph.state import TutorState, TutorCondition
 from app.services.condition import tutor_condition_for_participant
+from app.services.assignment import current_study_participation
+from app.services.llm import collect_llm_usage
 from app.socratic.phases import SocraticPhase
-from app.persistence.sessions import save_session, load_session
+from app.persistence.sessions import (
+    create_session,
+    fail_turn,
+    load_session,
+    save_turn,
+    start_turn,
+)
 
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 _sessions: dict[str, TutorState] = {}
 
@@ -34,12 +46,14 @@ class TutorMessageResponse(BaseModel):
 def _new_session_state(
     session_id: str,
     participant: dict,
+    study_participation_id: str,
 ) -> TutorState:
     initial_phase = SocraticPhase.ELENCHUS
 
     return {
         "session_id": session_id,
         "participant_id": str(participant["id"]),
+        "study_participation_id": study_participation_id,
         "messages": [],
         "tutor_condition": tutor_condition_for_participant(
             participant
@@ -68,7 +82,14 @@ async def start_session(
     session_key = str(session_id)
     turn_key = str(turn_id)
     try:
-        state = _new_session_state(session_key, participant)
+        participation = current_study_participation(str(participant["id"]))
+        if participation.assigned_condition_code != str(participant["condition"]):
+            raise ValueError("Participant condition does not match study assignment")
+        if participation.status != "tutor":
+            raise ValueError(
+                f"Participant study stage is {participation.status!r}, not 'tutor'"
+            )
+        state = _new_session_state(session_key, participant, participation.id)
     except ValueError as exc:
         raise HTTPException(
             status_code=403,
@@ -85,11 +106,22 @@ async def start_session(
         )
 
     state["current_turn_id"] = turn_key
-    opening_line = load_scenario().opening_question
+    try:
+        scenario = load_scenario(participation.tutor_scenario_key)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Assigned tutor scenario is unavailable in this deployment.",
+        ) from exc
+    opening_line = scenario.opening_question
 
     state["messages"] = [AIMessage(content=opening_line)]
 
-    save_session(state)
+    create_session(
+        state,
+        assigned_condition_code=str(participant["condition"]),
+        scenario=scenario,
+    )
 
     return TutorMessageResponse(
         session_id=session_id,
@@ -115,7 +147,10 @@ async def send_message(
     state = _sessions.get(session_key)
 
     if state is None:
-        state = load_session(session_key)
+        state = load_session(
+            session_key,
+            str(participant["id"]),
+        )
 
         if state is not None:
             _sessions[session_key] = state
@@ -134,8 +169,13 @@ async def send_message(
             detail="This tutoring session is complete. Start a new session.",
     )
 
+    # Work on a copy so a failed invocation cannot contaminate the in-memory
+    # representation of the last successfully completed turn.
+    state = deepcopy(state)
     state["current_turn_id"] = turn_key
     state["last_student_message"] = req.message
+    state["route_decision"] = None
+    state["response_evaluation"] = None
 
     state["messages"] = [
         *state.get("messages", []),
@@ -144,9 +184,39 @@ async def send_message(
 
     messages_before = len(state["messages"])
 
-    result = tutor_graph.invoke(state)
+    phase_before = state["current_phase"]
+    if phase_before is None:
+        raise HTTPException(
+            status_code=409,
+            detail="This tutoring session has no active phase.",
+        )
 
-    save_session(result)
+    start_turn(state, phase_before=phase_before)
+    try:
+        started = perf_counter()
+        with collect_llm_usage() as usage:
+            result = tutor_graph.invoke(state)
+        latency_ms = round((perf_counter() - started) * 1000)
+        save_turn(
+            result,
+            phase_before=phase_before,
+            latency_ms=latency_ms,
+            input_tokens=usage.input_tokens,
+            output_tokens=usage.output_tokens,
+        )
+    except Exception as exc:
+        try:
+            fail_turn(
+                state,
+                exc,
+                latency_ms=round((perf_counter() - started) * 1000),
+                input_tokens=usage.input_tokens,
+                output_tokens=usage.output_tokens,
+            )
+        except Exception:
+            logger.exception("Failed to persist terminal failure for tutor turn %s", turn_key)
+        raise
+
     _sessions[session_key] = result
 
     # Return only messages generated during this graph invocation.

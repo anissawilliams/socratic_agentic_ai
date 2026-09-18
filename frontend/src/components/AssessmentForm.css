@@ -1,0 +1,95 @@
+.assessment-shell {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 32px 16px;
+  background: var(--app-bg, #f4f8fb);
+  color: var(--text, #243342);
+}
+
+.assessment-form {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 28px;
+  border: 1px solid var(--border, #dce8f0);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(20, 57, 91, 0.1);
+}
+
+.assessment-form h1 {
+  margin: 4px 0 8px;
+}
+
+.assessment-form__eyebrow {
+  margin: 0;
+  color: var(--blue-dark, #356fa3);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.assessment-form__scenario {
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid #d8ebf5;
+  border-radius: 14px;
+  background: var(--blue-soft, #edf7fc);
+}
+
+.assessment-form__scenario h2 {
+  margin-top: 0;
+}
+
+.assessment-form__question {
+  display: grid;
+  gap: 10px;
+  margin: 24px 0;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.assessment-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d7e2ea;
+  border-radius: 12px;
+  color: inherit;
+  font: inherit;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.assessment-form__error {
+  color: #a33a3a;
+}
+
+.assessment-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.assessment-form__actions button {
+  padding: 10px 16px;
+  border: 1px solid var(--border, #dce8f0);
+  border-radius: 999px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.assessment-form__actions button[type="submit"] {
+  border-color: var(--blue, #4f8fc5);
+  background: var(--blue, #4f8fc5);
+  color: #fff;
+}
+
+.assessment-form__actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
