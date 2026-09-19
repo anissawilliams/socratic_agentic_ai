@@ -27,9 +27,16 @@ function App() {
           if (active) {
             setParticipant(participant);
           }
-        } catch {
-          if (active) {
+        } catch (error) {
+          console.error("Unable to restore participant:", error);
+        
+          const status = error?.response?.status;
+        
+          if (status === 401 || status === 403) {
             clearParticipantCode();
+          }
+        
+          if (active) {
             setParticipant(null);
           }
         }

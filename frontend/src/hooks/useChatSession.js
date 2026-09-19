@@ -5,6 +5,7 @@ import {
   sendMessage as apiSendMessage,
 } from "../api/chatClient";
 
+import { clearParticipantCode } from "../api/authClient";
 
 const STORAGE_KEY = "socratic_tutor_session";
 
@@ -31,7 +32,7 @@ function failureMessage(err) {
   }
 
   if (err.status === 401 || err.status === 403) {
-    return "Your sign-in expired. Reload the page to sign in again.";
+    return "Your participant code could not be verified. Please sign in again.";
   }
 
   if (err.status === 404) {
@@ -45,6 +46,18 @@ function failureMessage(err) {
   return `The tutor rejected the request (status ${err.status}).`;
 }
 
+function recoverFromAuthFailure(err) {
+  if (err.status !== 401 && err.status !== 403) {
+    return false;
+  }
+
+  clearParticipantCode();
+  sessionStorage.removeItem(STORAGE_KEY);
+
+  window.location.reload();
+
+  return true;
+}
 
 function logFailure(action, err) {
   console.error(
@@ -129,7 +142,9 @@ export function useChatSession() {
       setIsComplete(data.is_complete);
     } catch (err) {
       logFailure("Starting a session", err);
-
+      if (recoverFromAuthFailure(err)) {
+        return;
+      }
       setMessages([
         {
           role: "tutor",
@@ -180,7 +195,9 @@ export function useChatSession() {
       setIsComplete(data.is_complete);
     } catch (err) {
       logFailure("Sending a message", err);
-
+      if (recoverFromAuthFailure(err)) {
+        return;
+      }
       setMessages((prev) => [
         ...prev,
         {
@@ -222,7 +239,9 @@ export function useChatSession() {
       setIsComplete(data.is_complete);
     } catch (err) {
       logFailure("Starting a session", err);
-
+      if (recoverFromAuthFailure(err)) {
+        return;
+      }
       setMessages([
         {
           role: "tutor",

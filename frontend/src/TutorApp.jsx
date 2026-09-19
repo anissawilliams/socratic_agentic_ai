@@ -4,6 +4,7 @@ import ChatWindow from "./components/ChatWindow";
 import ChatInput from "./components/ChatInput";
 import PhaseIndicator from "./components/PhaseIndicator";
 import { useChatSession } from "./hooks/useChatSession";
+import { clearParticipantCode } from "./api/authClient";
 
 import "./App.css";
 import "./assets/socratic-tutor.css";
@@ -22,6 +23,11 @@ function TutorApp() {
   } = useChatSession();
 
   const hasStarted = useRef(false);
+  const handleSwitchParticipant = () => {
+    clearParticipantCode();
+    sessionStorage.removeItem("socratic_tutor_session");
+    window.location.reload();
+};
 
   useEffect(() => {
     if (hasStarted.current) {
@@ -45,16 +51,23 @@ function TutorApp() {
           <div className="tutor-brand__text">
             <h1 className="tutor-brand__name">Socratic Tutor</h1>
             <span className="tutor-brand__status">
-              Ready to explore
+              Ready
             </span>
           </div>
         </div>
 
         <button
-          className="new-session-button"
-          onClick={resetSession}
+        className="new-session-button"
+        onClick={resetSession}
         >
-          New session
+        New session
+        </button>
+
+        <button
+          className="new-session-button"
+          onClick={handleSwitchParticipant}
+        >
+          Switch participant
         </button>
       </header>
 
