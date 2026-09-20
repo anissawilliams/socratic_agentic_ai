@@ -39,6 +39,11 @@ def test_resolves_precomputed_assignment():
                 "transfer_type": "near",
                 "assigned_condition_code": "socratic_questioning",
                 "tutor_scenario_key": "citation_quality",
+                "pretest_instrument_key": "test_near_transfer",
+                "pretest_scenario_key": "test_citation_pre",
+                "tutor_scenario_key": "citation_quality",
+                "posttest_instrument_key": "test_near_transfer",
+                "posttest_scenario_key": "test_citation_post",
                 "status": "tutor",
             }
         ]

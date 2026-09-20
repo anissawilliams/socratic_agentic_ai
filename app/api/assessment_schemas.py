@@ -21,6 +21,7 @@ class AssessmentContentResponse(BaseModel):
     instrument_version: str
     content_sha256: str
     stage: AssessmentStage
+    attempt_id: str
     scenario_key: str
     scenario_version: str
     scenario_sha256: str
@@ -37,6 +38,7 @@ class AssessmentAnswer(BaseModel):
 class AssessmentSubmission(BaseModel):
     instrument_key: str
     instrument_version: str
+    attempt_id: str
     content_sha256: str
     stage: AssessmentStage
     scenario_key: str

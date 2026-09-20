@@ -12,7 +12,13 @@ class StudyParticipation:
     cohort_code: str
     transfer_type: str
     assigned_condition_code: str
+
+    pretest_instrument_key: str
+    pretest_scenario_key: str
     tutor_scenario_key: str
+    posttest_instrument_key: str
+    posttest_scenario_key: str
+
     status: str
 
 
@@ -30,11 +36,17 @@ def current_study_participation(participant_id: str) -> StudyParticipation:
 
     row = rows[0]
     return StudyParticipation(
-        id=str(row["id"]),
-        round_number=int(row["round_number"]),
-        cohort_code=str(row["cohort_code"]),
-        transfer_type=str(row["transfer_type"]),
-        assigned_condition_code=str(row["assigned_condition_code"]),
-        tutor_scenario_key=str(row["tutor_scenario_key"]),
-        status=str(row["status"]),
-    )
+    id=str(row["id"]),
+    round_number=int(row["round_number"]),
+    cohort_code=str(row["cohort_code"]),
+    transfer_type=str(row["transfer_type"]),
+    assigned_condition_code=str(row["assigned_condition_code"]),
+
+    pretest_instrument_key=str(row["pretest_instrument_key"]),
+    pretest_scenario_key=str(row["pretest_scenario_key"]),
+    tutor_scenario_key=str(row["tutor_scenario_key"]),
+    posttest_instrument_key=str(row["posttest_instrument_key"]),
+    posttest_scenario_key=str(row["posttest_scenario_key"]),
+
+    status=str(row["status"]),
+)
