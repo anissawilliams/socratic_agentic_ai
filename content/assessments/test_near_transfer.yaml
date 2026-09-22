@@ -18,16 +18,16 @@ pretest:
   questions:
     - id: pre_q1
       construct: reasoning
-      prompt: What would you consider first, and why?
+      prompt: What do you recommend?
     - id: pre_q2
       construct: evidence
-      prompt: What evidence would help you judge the source?
+      prompt: What evidence from the scenario best supports your recommendation? Use at least one quantitative fact.
     - id: pre_q3
       construct: limitations
-      prompt: What limitations or concerns would you look for?
+      prompt: What is the strongest concern or argument against your recommendation? 
     - id: pre_q4
       construct: decision
-      prompt: How would you decide whether to use the source?
+      prompt: What specific uncertainty or new information could change your decision, and how? 
 
 posttest:
   scenario_key: test_citation_post
@@ -41,13 +41,13 @@ posttest:
   questions:
     - id: post_q1
       construct: reasoning
-      prompt: What would you consider first, and why?
+      prompt: What do you recommend?
     - id: post_q2
       construct: evidence
-      prompt: What evidence would help you judge the source?
+      prompt: What evidence from the scenario best supports your recommendation? Use at least one quantitative fact.
     - id: post_q3
       construct: limitations
-      prompt: What limitations or concerns would you look for?
+      prompt: What is the strongest concern or argument against your recommendation? 
     - id: post_q4
       construct: decision
-      prompt: How would you decide whether to use the source?
+      prompt: What specific uncertainty or new information could change your decision, and how? 

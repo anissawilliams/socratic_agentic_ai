@@ -22,6 +22,7 @@ export default function AssessmentForm({ content, onSubmit, onSkip }) {
       await onSubmit({
         instrument_key: content.instrument_key,
         instrument_version: content.instrument_version,
+        attempt_id: content.attempt_id,
         content_sha256: content.content_sha256,
         stage: content.stage,
         scenario_key: content.scenario_key,

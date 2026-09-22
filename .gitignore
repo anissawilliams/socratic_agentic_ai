@@ -30,3 +30,6 @@ scripts/outputs/
 participant_codes*.csv
 participant_code_assignments.csv
 *study_assignments.csv
+
+scripts/professor_assignments.csv
+study_participants.csv
