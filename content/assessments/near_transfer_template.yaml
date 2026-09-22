@@ -1,0 +1,54 @@
+# Draft template only. The loader refuses to serve it unless allow_draft=True.
+# Replace all bracketed content and change status to active only after the
+# instrument wording and equivalent-complexity scenarios are approved.
+
+key: near_transfer_template
+version: 0.1.0
+status: draft
+transfer_type: near
+cohort: "[discipline or cohort key]"
+
+# The tutor uses the pre-test topic/scenario assignment, but it must never
+# receive the learner's pre-test answers.
+tutor_scenario_key: "[matching tutor scenario key]"
+
+pretest:
+  scenario_key: "[pre-test scenario A key]"
+  scenario_version: 0.1.0
+  scenario_title: "[pre-test scenario A title]"
+  scenario_text: >-
+    [Final participant-facing pre-test scenario A goes here.]
+  questions:
+    - id: pre_q1
+      construct: "[construct 1]"
+      prompt: "[Final open-text question 1]"
+    - id: pre_q2
+      construct: "[construct 2]"
+      prompt: "[Final open-text question 2]"
+    - id: pre_q3
+      construct: "[construct 3]"
+      prompt: "[Final open-text question 3]"
+    - id: pre_q4
+      construct: "[construct 4]"
+      prompt: "[Final open-text question 4]"
+
+posttest:
+  scenario_key: "[post-test scenario B key]"
+  scenario_version: 0.1.0
+  scenario_title: "[post-test scenario B title]"
+  scenario_text: >-
+    [Final participant-facing post-test scenario B of equivalent complexity
+    goes here.]
+  questions:
+    - id: post_q1
+      construct: "[construct 1]"
+      prompt: "[Final open-text question 1 adapted to scenario B]"
+    - id: post_q2
+      construct: "[construct 2]"
+      prompt: "[Final open-text question 2 adapted to scenario B]"
+    - id: post_q3
+      construct: "[construct 3]"
+      prompt: "[Final open-text question 3 adapted to scenario B]"
+    - id: post_q4
+      construct: "[construct 4]"
+      prompt: "[Final open-text question 4 adapted to scenario B]"

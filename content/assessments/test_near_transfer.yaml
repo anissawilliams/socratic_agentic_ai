@@ -1,0 +1,53 @@
+key: test_near_transfer
+version: 0.1.0
+status: active
+transfer_type: near
+cohort: Charleston
+
+tutor_scenario_key: citation_quality
+
+pretest:
+  scenario_key: test_citation_pre
+  scenario_version: 0.1.0
+  scenario_title: Test Citation Scenario A
+  scenario_text: >-
+    You are evaluating sources for a research paper. One source makes a
+    strong claim but provides little information about its evidence or
+    methodology. Explain how you would decide whether to use the source.
+
+  questions:
+    - id: pre_q1
+      construct: reasoning
+      prompt: What do you recommend?
+    - id: pre_q2
+      construct: evidence
+      prompt: What evidence from the scenario best supports your recommendation? Use at least one quantitative fact.
+    - id: pre_q3
+      construct: limitations
+      prompt: What is the strongest concern or argument against your recommendation? 
+    - id: pre_q4
+      construct: decision
+      prompt: What specific uncertainty or new information could change your decision, and how? 
+
+posttest:
+  scenario_key: test_citation_post
+  scenario_version: 0.1.0
+  scenario_title: Test Citation Scenario B
+  scenario_text: >-
+    You are evaluating a different source for a research project. The
+    source presents a persuasive conclusion, but you are unsure how well
+    its evidence supports that conclusion. Explain how you would evaluate it.
+
+  questions:
+    - id: post_q1
+      construct: reasoning
+      prompt: What do you recommend?
+    - id: post_q2
+      construct: evidence
+      prompt: What evidence from the scenario best supports your recommendation? Use at least one quantitative fact.
+    - id: post_q3
+      construct: limitations
+      prompt: What is the strongest concern or argument against your recommendation? 
+    - id: post_q4
+      construct: decision
+      prompt: What specific uncertainty or new information could change your decision, and how? 

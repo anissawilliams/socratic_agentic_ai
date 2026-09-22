@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 
 from app.api.auth.dependencies import require_participant
 from app.api.auth.schemas import ParticipantResponse
+from app.services.assignment import current_study_participation
+
 
 router = APIRouter(
     prefix="/auth",
@@ -16,4 +18,11 @@ router = APIRouter(
 def get_current_participant(
     participant: dict = Depends(require_participant),
 ) -> dict:
-    return participant
+    participation = current_study_participation(
+        str(participant["id"])
+    )
+
+    return {
+        **participant,
+        "study_status": participation.status,
+    }

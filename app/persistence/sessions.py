@@ -1,170 +1,374 @@
+"""Relational tutor-session persistence with no JSON research payloads."""
+
 from datetime import datetime, timezone
-from typing import Any
 
-from langchain_core.messages import (
-    messages_from_dict,
-    messages_to_dict,
-)
+from langchain_core.messages import AIMessage, HumanMessage
 
+from app.config import LLM_MODEL
+from app.content.scenarios import Scenario
 from app.graph.state import TutorCondition, TutorState
 from app.models.evaluation import ResponseEvaluation
 from app.models.routing import RouteDecision, RoutingRecord
 from app.services.supabase import get_supabase_client
+from app.services.provenance import prompt_bundle_provenance
+from app.socratic.context import PHASE_KEY
 from app.socratic.phases import SocraticPhase
 
 
-def serialize_state(state: TutorState) -> dict[str, Any]:
-    """Convert TutorState into JSON-compatible data."""
-
-    route_decision = state.get("route_decision")
-    response_evaluation = state.get("response_evaluation")
-
-    return {
-        "session_id": state["session_id"],
-        "participant_id": state["participant_id"],
-        "messages": messages_to_dict(state["messages"]),
-        "tutor_condition": (
-            state["tutor_condition"].value
-            if state.get("tutor_condition") is not None
-            else None
-        ),
-        "current_turn_id": state.get("current_turn_id"),
-        "current_phase": (
-            state["current_phase"].value
-            if state.get("current_phase") is not None
-            else None
-        ),
-        "previous_phase": (
-            state["previous_phase"].value
-            if state.get("previous_phase") is not None
-            else None
-        ),
-        "phase_history": [
-            phase.value
-            for phase in state.get("phase_history", [])
-        ],
-        "route_decision": (
-            route_decision.model_dump(mode="json")
-            if route_decision is not None
-            else None
-        ),
-        "routing_history": [
-            record.model_dump(mode="json")
-            for record in state.get("routing_history", [])
-        ],
-        "response_evaluation": (
-            response_evaluation.model_dump(mode="json")
-            if response_evaluation is not None
-            else None
-        ),
-        "pending_event": state.get("pending_event"),
-        "last_student_message": state.get(
-            "last_student_message",
-            "",
-        ),
-        "is_complete": state.get("is_complete", False),
-        "completed_at": state.get("completed_at"),
-    }
+def _value(value):
+    return getattr(value, "value", value)
 
 
-def deserialize_state(data: dict[str, Any]) -> TutorState:
-    """Rebuild TutorState from persisted JSON data."""
-
-    tutor_condition = data.get("tutor_condition")
-    current_phase = data.get("current_phase")
-    previous_phase = data.get("previous_phase")
-    route_decision = data.get("route_decision")
-    response_evaluation = data.get("response_evaluation")
-
-    return {
-        "session_id": data["session_id"],
-        "participant_id": data["participant_id"],
-        "messages": messages_from_dict(
-            data.get("messages", [])
-        ),
-        "tutor_condition": (
-            TutorCondition(tutor_condition)
-            if tutor_condition is not None
-            else None
-        ),
-        "current_turn_id": data.get("current_turn_id"),
-        "current_phase": (
-            SocraticPhase(current_phase)
-            if current_phase is not None
-            else None
-        ),
-        "previous_phase": (
-            SocraticPhase(previous_phase)
-            if previous_phase is not None
-            else None
-        ),
-        "phase_history": [
-            SocraticPhase(phase)
-            for phase in data.get("phase_history", [])
-        ],
-        "route_decision": (
-            RouteDecision.model_validate(route_decision)
-            if route_decision is not None
-            else None
-        ),
-        "routing_history": [
-            RoutingRecord.model_validate(record)
-            for record in data.get("routing_history", [])
-        ],
-        "response_evaluation": (
-            ResponseEvaluation.model_validate(
-                response_evaluation
-            )
-            if response_evaluation is not None
-            else None
-        ),
-        "pending_event": data.get("pending_event"),
-        "last_student_message": data.get(
-            "last_student_message",
-            "",
-        ),
-        "is_complete": data.get("is_complete", False),
-        "completed_at": data.get("completed_at"),
-    }
+def _rpc_scalar(data):
+    if isinstance(data, list):
+        if not data:
+            return None
+        first = data[0]
+        if isinstance(first, dict) and len(first) == 1:
+            return next(iter(first.values()))
+        return first
+    return data
 
 
-def save_session(state: TutorState) -> None:
-    """Persist the latest session snapshot."""
-
-    client = get_supabase_client()
-
-    payload = {
-        "session_id": state["session_id"],
-        "participant_id": state["participant_id"],
-        "state": serialize_state(state),
-        "is_complete": state["is_complete"],
-        "updated_at": datetime.now(
-            timezone.utc
-        ).isoformat(),
-    }
-
-    client.table("tutor_sessions").upsert(
-        payload,
-        on_conflict="session_id",
+def create_session(
+    state: TutorState,
+    *,
+    assigned_condition_code: str,
+    scenario: Scenario,
+) -> None:
+    """Persist a new session and its opening message atomically."""
+    opening_message = str(state["messages"][0].content)
+    provenance = prompt_bundle_provenance()
+    get_supabase_client().rpc(
+        "start_tutor_session",
+        {
+            "p_session_id": state["session_id"],
+            "p_participant_id": state["participant_id"],
+            "p_study_participation_id": state["study_participation_id"],
+            "p_assigned_condition_code": assigned_condition_code,
+            "p_runtime_condition_code": _value(state["tutor_condition"]),
+            "p_scenario_key": scenario.key,
+            "p_scenario_version": scenario.version,
+            "p_scenario_sha256": scenario.sha256,
+            "p_tutor_prompt_bundle_key": provenance.key,
+            "p_tutor_prompt_bundle_version": provenance.version,
+            "p_tutor_prompt_bundle_sha256": provenance.sha256,
+            "p_prompt_sha256": provenance.tutor_prompt_sha256,
+            "p_application_revision": provenance.application_revision,
+            "p_model_name": LLM_MODEL,
+            "p_opening_turn_id": state["current_turn_id"],
+            "p_opening_message": opening_message,
+            "p_current_phase_code": _value(state["current_phase"]),
+        },
     ).execute()
 
 
-def load_session(session_id: str) -> TutorState | None:
-    """Load a persisted session snapshot by session ID."""
+def start_turn(
+    state: TutorState,
+    *,
+    phase_before: SocraticPhase,
+) -> None:
+    """Create the durable started row before invoking any model."""
+    provenance = prompt_bundle_provenance()
+    get_supabase_client().rpc(
+        "start_tutor_turn",
+        {
+            "p_turn_id": state["current_turn_id"],
+            "p_session_id": state["session_id"],
+            "p_participant_id": state["participant_id"],
+            "p_student_message": state["last_student_message"],
+            "p_phase_before_code": phase_before.value,
+            "p_model_name": LLM_MODEL,
+            "p_tutor_prompt_bundle_key": provenance.key,
+            "p_tutor_prompt_bundle_version": provenance.version,
+            "p_tutor_prompt_bundle_sha256": provenance.sha256,
+            "p_prompt_sha256": provenance.tutor_prompt_sha256,
+            "p_application_revision": provenance.application_revision,
+        },
+    ).execute()
 
+
+def save_turn(
+    state: TutorState,
+    *,
+    phase_before: SocraticPhase,
+    latency_ms: int,
+    input_tokens: int | None,
+    output_tokens: int | None,
+) -> None:
+    """Persist one completed graph invocation through a typed transaction."""
+    evaluation = state.get("response_evaluation")
+    if evaluation is None:
+        raise ValueError("Cannot persist a turn without its evaluation")
+
+    route = state.get("route_decision")
+    provenance = prompt_bundle_provenance()
+    tutor_response = str(state["messages"][-1].content)
+    completed_at = state.get("completed_at") or datetime.now(
+        timezone.utc
+    ).isoformat()
+
+    params = {
+        "p_turn_id": state["current_turn_id"],
+        "p_session_id": state["session_id"],
+        "p_participant_id": state["participant_id"],
+        "p_tutor_response": tutor_response,
+        "p_phase_before_code": phase_before.value,
+        "p_phase_after_code": _value(state.get("current_phase")),
+        "p_previous_phase_code": _value(state.get("previous_phase")),
+        "p_is_session_complete": state["is_complete"],
+        "p_completed_at": completed_at,
+        "p_latency_ms": latency_ms,
+        "p_input_tokens": input_tokens,
+        "p_output_tokens": output_tokens,
+        "p_phase_goal_satisfied": evaluation.phase_goal_satisfied,
+        "p_evaluation_decision_code": evaluation.decision,
+        "p_evaluation_reasoning_summary": evaluation.reasoning_summary,
+        "p_evaluation_evidence": evaluation.evidence,
+        "p_learner_contribution": evaluation.learner_contribution,
+        "p_addressed_question": evaluation.addressed_question,
+        "p_unresolved_issue": evaluation.unresolved_issue,
+        "p_follow_up_target": evaluation.follow_up_target,
+        "p_evaluation_avoid_repeating": evaluation.avoid_repeating,
+        "p_session_goal_satisfied": evaluation.session_goal_satisfied,
+        "p_session_unresolved_issue": evaluation.session_unresolved_issue,
+        "p_session_completion_reason": evaluation.session_completion_reason,
+        "p_evaluator_model_name": LLM_MODEL,
+        "p_evaluator_prompt_version": provenance.evaluator_prompt_version,
+        "p_evaluator_prompt_sha256": provenance.evaluator_prompt_sha256,
+        "p_evaluator_application_revision": provenance.application_revision,
+        "p_routing_action_code": route.action if route else None,
+        "p_selected_phase_code": _value(route.next_phase) if route else None,
+        "p_routing_topic_code": route.topic if route else None,
+        "p_routing_move_type_code": route.move_type if route else None,
+        "p_routing_target": route.target if route else None,
+        "p_routing_reasoning_summary": route.reasoning_summary if route else None,
+        "p_routing_avoid_repeating": route.avoid_repeating if route else [],
+        "p_router_model_name": LLM_MODEL if route else None,
+        "p_router_prompt_version": (
+            provenance.router_prompt_version if route else None
+        ),
+        "p_router_prompt_sha256": (
+            provenance.router_prompt_sha256 if route else None
+        ),
+        "p_router_application_revision": (
+            provenance.application_revision if route else None
+        ),
+    }
+    get_supabase_client().rpc("record_tutor_turn", params).execute()
+
+
+def fail_turn(
+    state: TutorState,
+    error: Exception,
+    *,
+    latency_ms: int,
+    input_tokens: int | None,
+    output_tokens: int | None,
+) -> None:
+    """Terminally mark a started turn failed without exposing a traceback."""
+    get_supabase_client().rpc(
+        "fail_tutor_turn",
+        {
+            "p_turn_id": state["current_turn_id"],
+            "p_session_id": state["session_id"],
+            "p_participant_id": state["participant_id"],
+            "p_error_code": type(error).__name__,
+            "p_error_detail": str(error)[:2000],
+            "p_latency_ms": latency_ms,
+            "p_input_tokens": input_tokens,
+            "p_output_tokens": output_tokens,
+        },
+    ).execute()
+
+
+def _rows_by_turn(rows: list[dict]) -> dict[str, dict]:
+    return {str(row["tutor_turn_id"]): row for row in rows}
+
+
+def _items_by_turn(rows: list[dict]) -> dict[str, list[str]]:
+    grouped: dict[str, list[tuple[int, str]]] = {}
+    for row in rows:
+        grouped.setdefault(str(row["tutor_turn_id"]), []).append(
+            (int(row["item_order"]), str(row["content"]))
+        )
+    return {
+        turn_id: [content for _, content in sorted(items)]
+        for turn_id, items in grouped.items()
+    }
+
+
+def load_session(
+    session_id: str,
+    participant_id: str,
+) -> TutorState | None:
+    """Reconstruct graph state from explicit relational rows."""
     client = get_supabase_client()
-
-    response = (
-        client.table("tutor_sessions")
-        .select("state")
-        .eq("session_id", session_id)
-        .limit(1)
-        .execute()
+    subject_id = _rpc_scalar(
+        client.rpc(
+            "resolve_study_subject",
+            {"p_participant_id": participant_id},
+        ).execute().data
     )
-
-    if not response.data:
+    if not subject_id:
         return None
 
-    return deserialize_state(
-        response.data[0]["state"]
+    session_rows = (
+        client.table("tutor_session")
+        .select("*")
+        .eq("id", session_id)
+        .eq("study_subject_id", str(subject_id))
+        .limit(1)
+        .execute()
+        .data
+        or []
     )
+    if not session_rows:
+        return None
+    session = session_rows[0]
+
+    turns = (
+        client.table("tutor_turn")
+        .select("*")
+        .eq("tutor_session_id", session_id)
+        .eq("status", "completed")
+        .order("turn_number")
+        .execute()
+        .data
+        or []
+    )
+    turn_ids = [str(turn["id"]) for turn in turns]
+
+    evaluations: dict[str, dict] = {}
+    routes: dict[str, dict] = {}
+    evaluation_avoid: dict[str, list[str]] = {}
+    routing_avoid: dict[str, list[str]] = {}
+    if turn_ids:
+        evaluations = _rows_by_turn(
+            client.table("response_evaluation")
+            .select("*")
+            .in_("tutor_turn_id", turn_ids)
+            .execute()
+            .data
+            or []
+        )
+        routes = _rows_by_turn(
+            client.table("routing_decision")
+            .select("*")
+            .in_("tutor_turn_id", turn_ids)
+            .execute()
+            .data
+            or []
+        )
+        evaluation_avoid = _items_by_turn(
+            client.table("evaluation_avoid_repeating")
+            .select("tutor_turn_id,item_order,content")
+            .in_("tutor_turn_id", turn_ids)
+            .execute()
+            .data
+            or []
+        )
+        routing_avoid = _items_by_turn(
+            client.table("routing_avoid_repeating")
+            .select("tutor_turn_id,item_order,content")
+            .in_("tutor_turn_id", turn_ids)
+            .execute()
+            .data
+            or []
+        )
+
+    messages = [AIMessage(content=session["opening_message"])]
+    routing_history: list[RoutingRecord] = []
+    phase_history: list[SocraticPhase] = []
+    if turns:
+        first_phase = turns[0].get("phase_before_code")
+        if first_phase:
+            phase_history.append(SocraticPhase(first_phase))
+    elif session.get("current_phase_code"):
+        phase_history.append(SocraticPhase(session["current_phase_code"]))
+
+    for turn in turns:
+        turn_id = str(turn["id"])
+        messages.append(HumanMessage(content=turn["student_message"]))
+        kwargs = {}
+        if turn.get("phase_after_code") and not turn["is_session_complete"]:
+            kwargs[PHASE_KEY] = turn["phase_after_code"]
+        messages.append(
+            AIMessage(
+                content=turn["tutor_response"],
+                additional_kwargs=kwargs,
+            )
+        )
+
+        route = routes.get(turn_id)
+        if route:
+            selected_phase = SocraticPhase(route["selected_phase_code"])
+            routing_history.append(
+                RoutingRecord(
+                    phase=selected_phase,
+                    topic=route["topic_code"],
+                    move_type=route["move_type_code"],
+                    target=route["target"],
+                )
+            )
+            if not phase_history or selected_phase != phase_history[-1]:
+                phase_history.append(selected_phase)
+
+    last_turn = turns[-1] if turns else None
+    last_turn_id = str(last_turn["id"]) if last_turn else None
+    evaluation_row = evaluations.get(last_turn_id or "")
+    route_row = routes.get(last_turn_id or "")
+
+    evaluation = None
+    if evaluation_row:
+        evaluation = ResponseEvaluation(
+            phase_goal_satisfied=evaluation_row["phase_goal_satisfied"],
+            decision=evaluation_row["decision_code"],
+            reasoning_summary=evaluation_row["reasoning_summary"],
+            evidence=evaluation_row["evidence"],
+            learner_contribution=evaluation_row["learner_contribution"],
+            addressed_question=evaluation_row["addressed_question"],
+            unresolved_issue=evaluation_row.get("unresolved_issue"),
+            follow_up_target=evaluation_row.get("follow_up_target"),
+            avoid_repeating=evaluation_avoid.get(last_turn_id or "", []),
+            session_goal_satisfied=evaluation_row["session_goal_satisfied"],
+            session_unresolved_issue=evaluation_row.get(
+                "session_unresolved_issue"
+            ),
+            session_completion_reason=evaluation_row.get(
+                "session_completion_reason"
+            ),
+        )
+
+    route_decision = None
+    if route_row:
+        route_decision = RouteDecision(
+            action=route_row["action_code"],
+            next_phase=SocraticPhase(route_row["selected_phase_code"]),
+            topic=route_row["topic_code"],
+            move_type=route_row["move_type_code"],
+            target=route_row["target"],
+            reasoning_summary=route_row["reasoning_summary"],
+            avoid_repeating=routing_avoid.get(last_turn_id or "", []),
+        )
+
+    current_phase = session.get("current_phase_code")
+    previous_phase = session.get("previous_phase_code")
+    return {
+        "session_id": str(session["id"]),
+        "participant_id": participant_id,
+        "study_participation_id": str(session["study_participation_id"]),
+        "messages": messages,
+        "tutor_condition": TutorCondition(session["runtime_condition_code"]),
+        "current_turn_id": last_turn_id or str(session["opening_turn_id"]),
+        "current_phase": SocraticPhase(current_phase) if current_phase else None,
+        "previous_phase": SocraticPhase(previous_phase) if previous_phase else None,
+        "phase_history": phase_history,
+        "route_decision": route_decision,
+        "routing_history": routing_history,
+        "pending_event": None,
+        "last_student_message": last_turn["student_message"] if last_turn else "",
+        "response_evaluation": evaluation,
+        "is_complete": session["status"] == "complete",
+        "completed_at": session.get("completed_at"),
+    }
