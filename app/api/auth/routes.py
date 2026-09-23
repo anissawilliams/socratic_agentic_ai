@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.auth.dependencies import require_participant
 from app.api.auth.schemas import ParticipantResponse
@@ -18,9 +18,16 @@ router = APIRouter(
 def get_current_participant(
     participant: dict = Depends(require_participant),
 ) -> dict:
-    participation = current_study_participation(
-        str(participant["id"])
-    )
+    try:
+        participation = current_study_participation(
+            str(participant["id"])
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=403, 
+            detail=str(exc)
+            ) from exc
+
 
     return {
         **participant,

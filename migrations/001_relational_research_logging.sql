@@ -849,8 +849,10 @@ begin
     end if;
 
     select id into existing_attempt_id
-    from public.assessment_attempt
-    where idempotency_key = p_idempotency_key;
+    from public.assessment_attempt attempt  
+where study_participation_id = p_study_participation_id
+  and stage = p_stage
+  and attempt_number = p_attempt_number;
 
     if existing_attempt_id is not null then
         return existing_attempt_id;

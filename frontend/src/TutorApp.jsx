@@ -2,14 +2,13 @@ import { useEffect, useRef } from "react";
 
 import ChatWindow from "./components/ChatWindow";
 import ChatInput from "./components/ChatInput";
-import PhaseIndicator from "./components/PhaseIndicator";
+import SessionTimer from "./components/SessionTimer";
 import { useChatSession } from "./hooks/useChatSession";
 import { clearParticipantCode } from "./api/authClient";
 
 import "./App.css";
-import "./assets/socratic-tutor.css";
-import socratesAvatar from "./assets/socrates-avatar.png";
-
+import "./assets/ai-study.css";
+import aiStudyAvatar from "./assets/ai-study-avatar.png";
 
 function TutorApp() {
   const {
@@ -23,12 +22,9 @@ function TutorApp() {
   } = useChatSession();
 
   const hasStarted = useRef(false);
-  const handleSwitchParticipant = () => {
-    clearParticipantCode();
-    sessionStorage.removeItem("socratic_tutor_session");
-    window.location.reload();
-};
 
+
+  const sessionTime = "20:00";
   useEffect(() => {
     if (hasStarted.current) {
       return;
@@ -43,13 +39,13 @@ function TutorApp() {
       <header className="app-header">
         <div className="tutor-brand">
           <img
-            src={socratesAvatar}
+            src={aiStudyAvatar}
             alt=""
             className="tutor-brand__avatar"
           />
 
           <div className="tutor-brand__text">
-            <h1 className="tutor-brand__name">Socratic Tutor</h1>
+            <h1 className="tutor-brand__name">AI Study</h1>
             <span className="tutor-brand__status">
               Ready
             </span>
@@ -63,20 +59,18 @@ function TutorApp() {
         New session
         </button>
 
-        <button
-          className="new-session-button"
-          onClick={handleSwitchParticipant}
-        >
-          Switch participant
-        </button>
       </header>
 
-      <PhaseIndicator
+      <SessionTimer
+        sessionTime={sessionTime}
+        visible={true}
         phase={phase}
-        visible={!isComplete && phase !== null}
+        isComplete={isComplete}
       />
 
-      <ChatWindow messages={messages} />
+      <ChatWindow messages={messages}
+      isWaiting={isWaiting}
+      />
 
       <ChatInput
         onSend={sendMessage}

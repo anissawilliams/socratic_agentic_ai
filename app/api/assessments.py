@@ -99,11 +99,11 @@ def start_assessment(
             detail="Assessment scenario does not match study assignment",
         )
     
-    attempt_id = uuid4()
+
 
     try:
-        start_assessment_attempt(
-            attempt_id=attempt_id,
+        attempt_id = start_assessment_attempt(
+            attempt_id=uuid4(),
             participant_id=str(participant["id"]),
             study_participation_id=UUID(
                 participation.id

@@ -24,6 +24,8 @@ function App() {
   const [assessmentLoading, setAssessmentLoading] = useState(false);
   const [assessmentError, setAssessmentError] = useState("");
 
+  const devAuthBypass = import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
+
   const refreshParticipant = async () => {
     const code = getStoredParticipantCode();
 
@@ -159,6 +161,10 @@ function App() {
         }}
       />
     );
+  }
+
+  if (devAuthBypass) {
+    return <TutorApp />;
   }
 
   if (participant.study_status === "tutor") {
