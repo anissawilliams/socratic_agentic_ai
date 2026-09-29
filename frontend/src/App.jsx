@@ -156,8 +156,14 @@ function App() {
         content={assessment}
         onSubmit={async (submission) => {
           await submitAssessment(submission);
-          setAssessment(null);
-          await refreshParticipant();
+          try {
+            await refreshParticipant();
+          } catch (error) {
+            console.error("Unable to load next study stage:", error);
+            setAssessmentError(
+              "Your responses were saved, but the next screen could not be loaded. Refresh this page to continue."
+            );
+          }
         }}
       />
     );
@@ -168,7 +174,7 @@ function App() {
   }
 
   if (participant.study_status === "tutor") {
-    return <TutorApp />;
+    return <TutorApp onCompleted={refreshParticipant} />;
   }
 
   if (participant.study_status === "complete") {
