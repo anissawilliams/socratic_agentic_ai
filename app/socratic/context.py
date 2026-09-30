@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from langchain_core.messages import AIMessage, BaseMessage
 from app.models.routing import RouteDecision
 from app.socratic.phases import SocraticPhase
+from app.socratic.prompts.base import VOICE_REMINDER
 
 
 PHASE_KEY = "socratic_phase"
@@ -131,7 +132,8 @@ def system_prompt(
     return (
         f"{role_prompt}\n\n"
         f"{phase_context(messages)}\n\n"
-        f"{assigned_move_context(route_decision)}"
+        f"{assigned_move_context(route_decision)}\n\n"
+        f"{VOICE_REMINDER}"
     )
 
 def maieutics_system_prompt(
@@ -159,5 +161,6 @@ def maieutics_system_prompt(
         "Latest learner contribution:\n"
         f'  "{latest}"\n\n'
         "Develop the assigned target from what the learner is "
-        "actually expressing. Do not infer agreement from brevity."
+        "actually expressing. Do not infer agreement from brevity.\n\n"
+        f"{VOICE_REMINDER}"
     )

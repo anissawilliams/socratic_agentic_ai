@@ -31,11 +31,29 @@ function App() {
 
     if (!code) {
       setParticipant(null);
-      return;
+      return null;
     }
 
     const currentParticipant = await getParticipant(code);
     setParticipant(currentParticipant);
+    return currentParticipant;
+  };
+
+  // The backend advances the study stage in the same transaction that saves
+  // the final tutor turn, but retry briefly so a slow read never strands the
+  // participant on a finished chat.
+  const handleTutorComplete = async () => {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const current = await refreshParticipant();
+
+      if (current?.study_status !== "tutor") {
+        return current;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    throw new Error("Post-test is not ready yet");
   };
 
   useEffect(() => {
@@ -148,7 +166,7 @@ function App() {
     }
 
     if (!assessment) {
-      return null;
+      return <p>Loading assessment...</p>;
     }
 
     return (
@@ -156,6 +174,7 @@ function App() {
         content={assessment}
         onSubmit={async (submission) => {
           await submitAssessment(submission);
+          setAssessment(null);
           try {
             await refreshParticipant();
           } catch (error) {
@@ -169,12 +188,8 @@ function App() {
     );
   }
 
-  if (devAuthBypass) {
-    return <TutorApp />;
-  }
-
-  if (participant.study_status === "tutor") {
-    return <TutorApp onCompleted={refreshParticipant} />;
+  if (devAuthBypass || participant.study_status === "tutor") {
+    return <TutorApp onCompleted={handleTutorComplete} />;
   }
 
   if (participant.study_status === "complete") {
