@@ -74,7 +74,7 @@ def _new_session_state(
     "/tutor/start",
     response_model=TutorMessageResponse,
 )
-async def start_session(
+def start_session(
     participant: dict = Depends(require_participant),
 ):
     session_id = uuid4()
@@ -136,7 +136,7 @@ async def start_session(
     "/tutor/message",
     response_model=TutorMessageResponse,
 )
-async def send_message(
+def send_message(
     req: TutorMessageRequest,
     participant: dict = Depends(require_participant),
 ):
