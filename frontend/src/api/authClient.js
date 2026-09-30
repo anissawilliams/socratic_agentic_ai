@@ -14,6 +14,7 @@ export function getStoredParticipantCode() {
 
 export function clearParticipantCode() {
   window.localStorage.removeItem(PARTICIPANT_CODE_KEY);
+  window.dispatchEvent(new Event("participant-code-changed"));
 }
 
 function participantHeaders(code) {
@@ -35,5 +36,6 @@ export async function authenticateParticipant(code) {
   const participant = await getParticipant(normalizedCode);
 
   window.localStorage.setItem(PARTICIPANT_CODE_KEY, normalizedCode);
+  window.dispatchEvent(new Event("participant-code-changed"));
   return participant;
 }

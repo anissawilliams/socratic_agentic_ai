@@ -3,6 +3,10 @@ import { useEffect, useState } from "react";
 import Auth from "./components/Auth";
 import AssessmentForm from "./components/AssessmentForm";
 import TutorApp from "./TutorApp";
+import DemographicsForm from "./components/DemographicsForm";
+import SurveyForm from "./components/SurveyForm";
+import { submitDemographics } from "./api/studyFormsClient";
+import SignOutLink from "./components/SignOutLink";
 
 import {
   clearParticipantCode,
@@ -155,6 +159,21 @@ function App() {
         }}
       />
     );
+  }
+
+  if (participant.study_status === "demographics") {
+    return (
+      <DemographicsForm
+        onSubmit={async (demographics) => {
+          await submitDemographics(demographics);
+          await refreshParticipant();
+        }}
+      />
+    );
+  }
+
+  if (participant.study_status === "survey") {
+    return <SurveyForm onSubmitted={refreshParticipant} />;
   }
 
   if (["pretest", "posttest"].includes(participant.study_status)) {

@@ -4,6 +4,7 @@ import ChatWindow from "./components/ChatWindow";
 import ChatInput from "./components/ChatInput";
 import SessionTimer from "./components/SessionTimer";
 import { useChatSession } from "./hooks/useChatSession";
+import SignOutLink from "./components/SignOutLink";
 
 import "./App.css";
 import "./assets/ai-study.css";
@@ -58,7 +59,7 @@ function TutorApp({ onCompleted }) {
           />
 
           <div className="tutor-brand__text">
-            <h1 className="tutor-brand__name">AI Study</h1>
+            <h1 className="tutor-brand__name">Learning Study</h1>
             <span className="tutor-brand__status">
               Ready
             </span>
@@ -66,12 +67,14 @@ function TutorApp({ onCompleted }) {
         </div>
 
         {!isComplete && (
-          <button
-            className="new-session-button"
-            onClick={resetSession}
-          >
-            New session
-          </button>
+         <div className="header-links">
+         {!isComplete && (
+           <button type="button" className="header-link" onClick={resetSession}>
+             New session
+           </button>
+         )}
+         <SignOutLink variant="inline" />
+       </div>
         )}
 
       </header>

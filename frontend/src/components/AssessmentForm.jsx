@@ -41,13 +41,13 @@ export default function AssessmentForm({ content, onSubmit, onSkip }) {
   return (
     <main className="assessment-shell">
       <form className="assessment-form" onSubmit={handleSubmit}>
-        <header>
-          <p className="assessment-form__eyebrow">
-            {isPreTest ? "Before the conversation" : "After the conversation"}
-          </p>
-          <h1>{isPreTest ? "Pre-test" : "Post-test"}</h1>
-          <p>No AI feedback is provided during this assessment.</p>
-        </header>
+      <header>
+        <p className="assessment-form__eyebrow">
+          {isPreTest ? "Part 1 · Before the conversation" : "Part 3 · After the conversation"}
+        </p>
+        <h1>A few questions</h1>
+        <p>Answer in your own words. There's no AI help on this part.</p>
+      </header>
 
         <section className="assessment-form__scenario">
           <h2>{content.scenario_title}</h2>

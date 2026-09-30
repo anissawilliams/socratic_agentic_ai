@@ -1,0 +1,27 @@
+# Round 2 final survey. Participant-facing wording; bump `version` on any change.
+# TODO: replace the placeholder items with the adapted Java Tutor survey items.
+# Exactly 4 Likert items (1-5) and 1 optional open-ended question.
+
+key: final_survey
+version: 0.1.0
+
+scale:
+  - Strongly disagree
+  - Disagree
+  - Neutral
+  - Agree
+  - Strongly agree
+
+likert:
+  - id: likert_1
+    prompt: The AI helped me think more carefully about the topic.
+  - id: likert_2
+    prompt: The conversation with the AI was easy to follow.
+  - id: likert_3
+    prompt: I would use an AI like this for future coursework.
+  - id: likert_4
+    prompt: I feel more confident judging the quality of a research source.
+
+open:
+  id: open_response
+  prompt: Is there anything else you'd like to tell us about your experience?

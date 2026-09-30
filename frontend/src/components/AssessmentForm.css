@@ -1,67 +1,183 @@
+/* Shared by the pretest/posttest, demographics, and survey screens. */
+
 .assessment-shell {
   box-sizing: border-box;
   min-height: 100vh;
-  padding: 32px 16px;
+  padding: 44px 16px 48px;
   background: var(--app-bg, #f4f8fb);
   color: var(--text, #243342);
 }
 
 .assessment-form {
+  box-sizing: border-box;
   width: min(760px, 100%);
   margin: 0 auto;
-  padding: 28px;
+  padding: 36px 40px;
   border: 1px solid var(--border, #dce8f0);
   border-radius: 20px;
   background: #fff;
-  box-shadow: 0 18px 50px rgba(20, 57, 91, 0.1);
+  box-shadow: 0 18px 50px rgba(20, 57, 91, 0.08);
 }
 
-.assessment-form h1 {
-  margin: 4px 0 8px;
+/* ---------- Header ---------- */
+
+.assessment-form header {
+  padding-bottom: 20px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border, #dce8f0);
 }
 
 .assessment-form__eyebrow {
-  margin: 0;
+  margin: 0 0 6px !important;
   color: var(--blue-dark, #356fa3);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
+.assessment-form header h1 {
+  margin: 0 0 6px;
+}
+
+.assessment-form header p:not(.assessment-form__eyebrow) {
+  color: var(--text-muted, #5f7081);
+  font-size: 0.95rem;
+}
+
+/* ---------- Scenario ---------- */
+
 .assessment-form__scenario {
-  margin: 24px 0;
-  padding: 18px;
-  border: 1px solid #d8ebf5;
-  border-radius: 14px;
+  margin: 24px 0 8px;
+  padding: 20px 22px;
+  border-left: 4px solid var(--blue, #4f8fc5);
+  border-radius: 10px;
   background: var(--blue-soft, #edf7fc);
+  line-height: 1.6;
 }
 
 .assessment-form__scenario h2 {
-  margin-top: 0;
+  margin: 0 0 8px;
 }
+
+/* ---------- Questions ---------- */
 
 .assessment-form__question {
   display: grid;
   gap: 10px;
-  margin: 24px 0;
-  font-weight: 650;
-  line-height: 1.45;
+  margin: 28px 0 0;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
-.assessment-form textarea {
+.assessment-form fieldset.assessment-form__question {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.assessment-form legend {
+  padding: 0;
+  margin-bottom: 10px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.assessment-form textarea,
+.assessment-form input[type="number"],
+.assessment-form input[type="text"] {
   box-sizing: border-box;
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #d7e2ea;
-  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1px solid #cfdce6;
+  border-radius: 10px;
+  background: #fff;
   color: inherit;
   font: inherit;
   font-weight: 400;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.assessment-form textarea {
+  width: 100%;
+  min-height: 120px;
   resize: vertical;
 }
 
+.assessment-form input[type="number"] {
+  width: 110px;
+}
+
+.assessment-form input[type="text"] {
+  width: min(420px, 100%);
+}
+
+.assessment-form textarea:focus,
+.assessment-form input:focus {
+  outline: none;
+  border-color: var(--blue-dark, #356fa3);
+  box-shadow: 0 0 0 3px rgba(53, 111, 163, 0.18);
+}
+
+.assessment-form__inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 400;
+}
+
+/* Radio / checkbox rows */
+.assessment-form__choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.assessment-form__choice:hover {
+  background: #f6f9fc;
+}
+
+.assessment-form__choice:has(input:checked) {
+  border-color: #cfe1f0;
+  background: var(--blue-soft, #edf7fc);
+}
+
+.assessment-form__choice input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--blue-dark, #356fa3);
+}
+
+/* Likert scale: one row on wide screens, stacked on phones */
+.assessment-form__scale {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.assessment-form__scale .assessment-form__choice {
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 6px;
+  border-color: #e3ecf2;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ---------- Footer ---------- */
+
 .assessment-form__error {
+  margin-top: 20px !important;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fdf0ef;
   color: #a33a3a;
 }
 
@@ -69,27 +185,53 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 28px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border, #dce8f0);
 }
 
 .assessment-form__actions button {
-  padding: 10px 16px;
+  padding: 11px 22px;
   border: 1px solid var(--border, #dce8f0);
-  border-radius: 999px;
+  border-radius: 10px;
   background: #fff;
   color: inherit;
   font: inherit;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .assessment-form__actions button[type="submit"] {
-  border-color: var(--blue, #4f8fc5);
-  background: var(--blue, #4f8fc5);
+  border-color: var(--blue-dark, #356fa3);
+  background: var(--blue-dark, #356fa3);
   color: #fff;
+}
+
+.assessment-form__actions button[type="submit"]:hover:not(:disabled) {
+  background: #2c5e8c;
 }
 
 .assessment-form__actions button:disabled {
   cursor: wait;
   opacity: 0.65;
+}
+
+@media (max-width: 640px) {
+  .assessment-shell {
+    padding: 40px 10px 32px;
+  }
+
+  .assessment-form {
+    padding: 24px 18px;
+    border-radius: 16px;
+  }
+
+  .assessment-form__scale {
+    grid-template-columns: 1fr;
+  }
+
+  .assessment-form__scale .assessment-form__choice {
+    flex-direction: row;
+    text-align: left;
+  }
 }

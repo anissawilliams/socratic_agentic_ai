@@ -1,6 +1,10 @@
 """Relational tutor-session persistence with no JSON research payloads."""
 
 from datetime import datetime, timezone
+import logging
+import time
+
+import httpx
 
 from langchain_core.messages import AIMessage, HumanMessage
 
@@ -13,6 +17,33 @@ from app.services.supabase import get_supabase_client
 from app.services.provenance import prompt_bundle_provenance
 from app.socratic.context import PHASE_KEY
 from app.socratic.phases import SocraticPhase
+
+
+logger = logging.getLogger(__name__)
+
+_CONNECT_ATTEMPTS = 3
+
+
+def _execute(request):
+    """Execute a Supabase request, retrying only if the connection never opened.
+
+    A connect timeout/error means the request never reached the database, so
+    retrying cannot apply a write twice. Anything else (read timeouts, API
+    errors) is raised immediately because the write may already have landed.
+    """
+    for attempt in range(1, _CONNECT_ATTEMPTS + 1):
+        try:
+            return request.execute()
+        except (httpx.ConnectTimeout, httpx.ConnectError) as exc:
+            if attempt == _CONNECT_ATTEMPTS:
+                raise
+            logger.warning(
+                "Supabase connection failed (%s); retrying %d/%d",
+                type(exc).__name__,
+                attempt,
+                _CONNECT_ATTEMPTS - 1,
+            )
+            time.sleep(0.5 * attempt)
 
 
 def _value(value):
@@ -39,7 +70,7 @@ def create_session(
     """Persist a new session and its opening message atomically."""
     opening_message = str(state["messages"][0].content)
     provenance = prompt_bundle_provenance()
-    get_supabase_client().rpc(
+    _execute(get_supabase_client().rpc(
         "start_tutor_session",
         {
             "p_session_id": state["session_id"],
@@ -60,7 +91,7 @@ def create_session(
             "p_opening_message": opening_message,
             "p_current_phase_code": _value(state["current_phase"]),
         },
-    ).execute()
+    ))
 
 
 def start_turn(
@@ -70,7 +101,7 @@ def start_turn(
 ) -> None:
     """Create the durable started row before invoking any model."""
     provenance = prompt_bundle_provenance()
-    get_supabase_client().rpc(
+    _execute(get_supabase_client().rpc(
         "start_tutor_turn",
         {
             "p_turn_id": state["current_turn_id"],
@@ -85,7 +116,7 @@ def start_turn(
             "p_prompt_sha256": provenance.tutor_prompt_sha256,
             "p_application_revision": provenance.application_revision,
         },
-    ).execute()
+    ))
 
 
 def save_turn(
@@ -155,7 +186,7 @@ def save_turn(
             provenance.application_revision if route else None
         ),
     }
-    get_supabase_client().rpc("record_tutor_turn", params).execute()
+    _execute(get_supabase_client().rpc("record_tutor_turn", params))
 
 
 def fail_turn(
@@ -167,7 +198,7 @@ def fail_turn(
     output_tokens: int | None,
 ) -> None:
     """Terminally mark a started turn failed without exposing a traceback."""
-    get_supabase_client().rpc(
+    _execute(get_supabase_client().rpc(
         "fail_tutor_turn",
         {
             "p_turn_id": state["current_turn_id"],
@@ -179,7 +210,7 @@ def fail_turn(
             "p_input_tokens": input_tokens,
             "p_output_tokens": output_tokens,
         },
-    ).execute()
+    ))
 
 
 def _rows_by_turn(rows: list[dict]) -> dict[str, dict]:
@@ -205,21 +236,21 @@ def load_session(
     """Reconstruct graph state from explicit relational rows."""
     client = get_supabase_client()
     subject_id = _rpc_scalar(
-        client.rpc(
+        _execute(client.rpc(
             "resolve_study_subject",
             {"p_participant_id": participant_id},
-        ).execute().data
+        )).data
     )
     if not subject_id:
         return None
 
     session_rows = (
-        client.table("tutor_session")
+        _execute(client.table("tutor_session")
         .select("*")
         .eq("id", session_id)
         .eq("study_subject_id", str(subject_id))
         .limit(1)
-        .execute()
+        )
         .data
         or []
     )
@@ -228,12 +259,12 @@ def load_session(
     session = session_rows[0]
 
     turns = (
-        client.table("tutor_turn")
+        _execute(client.table("tutor_turn")
         .select("*")
         .eq("tutor_session_id", session_id)
         .eq("status", "completed")
         .order("turn_number")
-        .execute()
+        )
         .data
         or []
     )
@@ -245,34 +276,34 @@ def load_session(
     routing_avoid: dict[str, list[str]] = {}
     if turn_ids:
         evaluations = _rows_by_turn(
-            client.table("response_evaluation")
+            _execute(client.table("response_evaluation")
             .select("*")
             .in_("tutor_turn_id", turn_ids)
-            .execute()
+            )
             .data
             or []
         )
         routes = _rows_by_turn(
-            client.table("routing_decision")
+            _execute(client.table("routing_decision")
             .select("*")
             .in_("tutor_turn_id", turn_ids)
-            .execute()
+            )
             .data
             or []
         )
         evaluation_avoid = _items_by_turn(
-            client.table("evaluation_avoid_repeating")
+            _execute(client.table("evaluation_avoid_repeating")
             .select("tutor_turn_id,item_order,content")
             .in_("tutor_turn_id", turn_ids)
-            .execute()
+            )
             .data
             or []
         )
         routing_avoid = _items_by_turn(
-            client.table("routing_avoid_repeating")
+            _execute(client.table("routing_avoid_repeating")
             .select("tutor_turn_id,item_order,content")
             .in_("tutor_turn_id", turn_ids)
-            .execute()
+            )
             .data
             or []
         )

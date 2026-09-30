@@ -1,7 +1,7 @@
 """End-to-end smoke test of the participant study flow against a running backend.
 
 For each fresh test participant it walks:
-    pretest -> tutor (until complete) -> posttest -> complete
+    demographics -> pretest -> tutor (until complete) -> posttest -> complete
 and asserts the study status after every step, the same way the frontend sees it.
 Participants run concurrently to exercise multi-user behavior.
 
@@ -131,8 +131,16 @@ def run_participant(index: int, args) -> dict:
         result["code"] = created["participant_code"]
         client = Client(args.base_url, created["participant_code"])
 
-        expect_status(client, "pretest", "provisioning")
-        log("PASS provisioned, status=pretest")
+        expect_status(client, "demographics", "provisioning")
+        log("PASS provisioned, status=demographics")
+
+        client.call(
+            "POST",
+            "/study/demographics",
+            json={"age": 20, "gender_code": "female", "race_codes": ["asian"], "field_of_study": "Psychology"},
+        )
+        expect_status(client, "pretest", "demographics submit")
+        log("PASS demographics submitted, status=pretest")
 
         do_assessment(client, "pretest")
         expect_status(client, "tutor", "pretest submit")

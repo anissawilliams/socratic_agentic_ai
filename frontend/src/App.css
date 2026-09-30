@@ -26,8 +26,7 @@ body {
 .app-shell {
   width: min(760px, calc(100% - 32px));
   height: calc(100vh - 32px);
-
-  margin: 16px auto;
+  margin: 16px auto;   /* "auto" is what centers it */
 
   display: flex;
   flex-direction: column;
@@ -101,6 +100,39 @@ body {
 
   transform: translateY(-1px);
 }
+
+.header-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-header .header-link {
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  color: #14395b;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transform: none;
+}
+
+.app-header .header-link:hover {
+  background: none;
+  box-shadow: none;
+  color: var(--blue-dark);
+  transform: none;
+}
+
+/* The tutor header has its own sign-out link, so hide the floating one there. */
+body:has(.app-shell) .sign-out-link {
+  display: none;
+}
+
 
 /* ---------- Phase indicator ---------- */
 
@@ -307,6 +339,7 @@ body {
     height: 100vh;
 
     margin: 0;
+
 
     border: none;
     border-radius: 0;

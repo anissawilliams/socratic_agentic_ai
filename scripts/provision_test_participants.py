@@ -61,6 +61,7 @@ def create_participant(
     posttest_scenario_key: str,
     index: int,
     participant_code: str | None = None,
+    is_test: bool = True,
 ) -> dict:
     supabase = get_supabase_client()
 
@@ -77,7 +78,7 @@ def create_participant(
                 "email": email,
                 "condition": condition,
                 "access_code_hash": access_code_hash,
-                "is_test": True,
+                "is_test": is_test,
             }
         )
         .execute()
@@ -119,10 +120,9 @@ def create_participant(
     # Round determines transfer type under the current schema constraint.
     transfer_type = "near" if round_number == 1 else "far"
 
-    # Start at pretest for now.
-    # When demographics is implemented for Round 1, this can become
-    # "demographics" for Round 1 participants.
-    starting_status = "pretest"
+    # Round 1 collects demographics once, before the pretest.
+    # Round 2 starts at the pretest and ends with the final survey.
+    starting_status = "demographics" if round_number == 1 else "pretest"
 
     # 3. Create assignment/progress row.
     participation_response = (
@@ -193,12 +193,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--posttest-scenario", default="test_citation_post")
 
     parser.add_argument(
+        "--real",
+        action="store_true",
+        help="enroll REAL participants (is_test = false); requires --output",
+    )
+
+    parser.add_argument(
         "--output",
         type=Path,
         help="optional CSV file for plaintext test credentials",
     )
 
     args = parser.parse_args()
+
+    if args.real and not args.output:
+        parser.error("--real requires --output so the codes are saved")
 
     if args.count is not None and args.count < 1:
         parser.error("--count must be at least 1")
@@ -263,6 +272,7 @@ def main() -> None:
             posttest_scenario_key=args.posttest_scenario,
             index=index,
             participant_code=code,
+            is_test=not args.real,
         )
 
         created.append(participant)
