@@ -1,14 +1,14 @@
 key: socratic-tutor
-version: 1.0.0
+version: 1.1.0
 
 # Each version identifies the corresponding prompt source at this release.
 # The runtime SHA-256 values remain the authoritative integrity checks.
 components:
-  shared_context: 1.0.0
-  base: 1.0.0
-  elenchus: 1.0.0
-  aporia: 1.0.0
-  maieutics: 1.0.0
-  dialectic: 1.0.0
+  shared_context: 1.1.0
+  base: 1.1.0
+  elenchus: 1.1.0
+  aporia: 1.1.0
+  maieutics: 1.1.0
+  dialectic: 1.1.0
   evaluator: 1.0.0
   router: 1.0.0

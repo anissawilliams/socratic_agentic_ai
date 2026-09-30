@@ -5,7 +5,10 @@ import {
   sendMessage as apiSendMessage,
 } from "../api/chatClient";
 
-import { clearParticipantCode } from "../api/authClient";
+import {
+  clearParticipantCode,
+  getStoredParticipantCode,
+} from "../api/authClient";
 
 const STORAGE_KEY = "socratic_tutor_session";
 
@@ -18,7 +21,16 @@ function loadStoredSession() {
       return null;
     }
 
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+
+    // Sessions belong to one participant. On a shared machine, a stored chat
+    // from someone else must never be resumed.
+    if (parsed.participantCode !== getStoredParticipantCode()) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+
+    return parsed;
   } catch {
     sessionStorage.removeItem(STORAGE_KEY);
     return null;
@@ -102,6 +114,7 @@ export function useChatSession() {
     sessionStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
+        participantCode: getStoredParticipantCode(),
         sessionId,
         messages,
         phase,
