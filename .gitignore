@@ -33,3 +33,9 @@ participant_code_assignments.csv
 
 scripts/professor_assignments.csv
 study_participants.csv
+
+# plaintext participant codes
+*_participants.csv
+
+# plaintext participant codes
+*_participants.csv

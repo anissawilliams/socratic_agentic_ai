@@ -11,6 +11,8 @@
 - [ ] Verify assessment attempts resume cleanly after refresh/re-entry
 - [ ] Make sure the participant-facing UI never exposes internal study stage names
 
+
+
 ## 2. Conditions and Tutor Routing
 
 - [ ] Clean up and finalize condition codes
@@ -28,6 +30,8 @@
 - [ ] Confirm both conditions log comparable interaction data
 - [ ] Keep the pedagogical treatment consistent across rounds; change scenario-specific content rather than redesigning the intervention
 
+
+
 ## 3. Round 1 Demographics
 
 - [ ] Add a one-time demographics form before the Round 1 pretest
@@ -40,6 +44,8 @@
 - [ ] Automatically skip demographics if already completed
 - [ ] Make the form screenshot-ready for IRB materials
 
+
+
 ## 4. Round 2 Final Survey
 
 - [ ] Review the previous Java Tutor survey
@@ -51,19 +57,29 @@
 - [ ] Mark the participation complete after successful survey submission
 - [ ] Add a clean study-complete screen
 
+
+
 ## 5. Timer
 
-- [ ] Replace the placeholder `Session time: 20:00` with a real countdown
-- [ ] Decide which activities are timed
-  - [ ] Tutor interaction target: ~20 minutes
-  - [ ] Decide whether pretest/posttest also need countdowns
-- [ ] Decide what happens at `0:00`
-  - [ ] Auto-submit
-  - [ ] Disable further input
-  - [ ] Or show a neutral `Time is up` state
-- [ ] Persist or derive timing from a stable start timestamp so refreshes do not reset the timer
-- [ ] Keep the timer visually neutral and non-distracting
-- [ ] Log timing information needed for analysis
+- [ ] Implement separate countdown timers for each study phase
+  - [ ] Pretest: 10-minute maximum
+  - [ ] AI interaction: 10-minute maximum
+  - [ ] Post-test: 10-minute maximum
+- [ ] Use a stable persisted start timestamp for each phase
+- [ ] Ensure refresh/re-entry does not reset the timer
+- [ ] Decide behavior at `0:00` for each phase
+  - [ ] Pretest: auto-submit or lock responses and submit
+  - [ ] AI interaction: disable new messages and advance
+  - [ ] Post-test: auto-submit or lock responses and submit
+- [ ] Log for each phase:
+  - [ ] started_at
+  - [ ] completed_at
+  - [ ] elapsed_seconds
+  - [ ] whether timeout occurred
+- [ ] Keep the countdown visually neutral and identical across conditions
+- [ ] Verify timing survives refresh/re-entry
+
+
 
 ## 6. Keep Students On Task
 
@@ -74,7 +90,9 @@
 - [ ] Consider logging off-topic/redirection events for later analysis
 - [ ] Confirm prompts do not reveal condition names or study hypotheses
 
-## 7. LLM-as-Judge / NLP Evaluation
+
+
+## 7. LLM-as-Judge / NLP Evaluation - LATER - CAN BE DONE AFTER STUDY
 
 - [ ] Define the evaluation rubric with Navid/Saber
 - [ ] Create scenario-specific scoring criteria
@@ -97,17 +115,21 @@
   - [ ] Other semantic or linguistic measures selected by the research team
 - [ ] Do not make LLM evaluation part of the live participant interaction unless there is a study-design reason to do so
 
+
+
 ## 8. UI / Participant Experience
 
 - [x] Replace Socratic Tutor branding with neutral `AI Study` branding
 - [x] Replace Socrates imagery with a neutral AI-study avatar
 - [x] Remove participant-facing phase labels
 - [x] Add a visible `Thinking...` state while the model responds
-- [ ] Remove or hide `Switch participant` from the participant-facing UI
+- [x] Remove or hide `Switch participant` from the participant-facing UI
 - [ ] Keep dev/test controls available only in development
 - [ ] Finish the real countdown timer
 - [ ] Check all participant-facing copy for internal terminology
 - [ ] Confirm the interface stays visually identical across study conditions
+
+
 
 ## 9. Professor / External Tester Access Debugging
 
@@ -129,6 +151,8 @@
 - [ ] Retest from a machine/browser other than the development laptop before declaring the flow ready
 - [ ] Have at least one professor/tester successfully complete the full participant flow without developer intervention
 
+
+
 ## 10. End-to-End Validation and IRB Screenshots
 
 - [ ] Test one Round 1 participant end-to-end
@@ -149,6 +173,22 @@
   - [ ] Final survey
   - [ ] Completion screen
 
+
+## 11. Load / Concurrency Validation
+
+- [ ] Simulate at least 40 simultaneous participants
+- [ ] Prefer 50–60 simulated users to provide headroom
+- [ ] Exercise participant auth, assessment start, tutor session start, model calls, and database logging
+- [ ] Monitor Railway CPU/memory/concurrency and request failures
+- [ ] Monitor Supabase connection/rate limits and write failures
+- [ ] Monitor LLM/API rate limits and latency
+- [ ] Verify no participant state leaks across sessions
+- [ ] Verify no duplicate assessment/tutor records under concurrent load
+- [ ] Inspect resulting database records and confirm all simulated participant histories are complete and separable
+
+
+
+
 ## Near-Term Priority
 
 1. Check in the current UI, assessment, and RPC fixes.
@@ -161,3 +201,4 @@
 8. Finish the countdown timer and on-task guardrails.
 9. Run full external-tester validation.
 10. Capture the final IRB screenshots.
+

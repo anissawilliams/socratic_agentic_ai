@@ -47,6 +47,7 @@ function App() {
       const current = await refreshParticipant();
 
       if (current?.study_status !== "tutor") {
+        sessionStorage.removeItem("socratic_tutor_session");
         return current;
       }
 
@@ -187,11 +188,6 @@ function App() {
       />
     );
   }
-
-  if (devAuthBypass || participant.study_status === "tutor") {
-    return <TutorApp onCompleted={handleTutorComplete} />;
-  }
-
   if (participant.study_status === "complete") {
     return (
       <main style={{ padding: "2rem" }}>
@@ -200,6 +196,12 @@ function App() {
       </main>
     );
   }
+
+  if (devAuthBypass || participant.study_status === "tutor") {
+    return <TutorApp onCompleted={handleTutorComplete} />;
+  }
+
+  
 
   return (
     <main style={{ padding: "2rem" }}>
