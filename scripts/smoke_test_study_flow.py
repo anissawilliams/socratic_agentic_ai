@@ -36,6 +36,10 @@ STUDENT_REPLIES = [
     "I'd look at the methods, check if the results hold up, and see if the citing paper uses it honestly.",
     "Newer studies aren't automatically better, but they might use better data.",
     "I'd check whether the people citing it actually tested its claims or just repeated them.",
+    "Overall: citations show a paper is influential, not that it's good. I'd judge "
+    "quality by how the study was done, whether the evidence is recent and actually "
+    "matches the claim, how broad the claim is compared to who was studied, and "
+    "whether papers citing it use it fairly.",
 ]
 
 WORD_LIMIT = 60
@@ -141,7 +145,7 @@ def run_participant(index: int, args) -> dict:
         while not complete:
             if turns >= args.max_turns:
                 raise Fail(f"tutor did not complete within {args.max_turns} turns")
-            reply = STUDENT_REPLIES[turns % len(STUDENT_REPLIES)]
+            reply = STUDENT_REPLIES[min(turns, len(STUDENT_REPLIES) - 1)]
             data = client.call(
                 "POST", "/tutor/message", json={"session_id": session_id, "message": reply}
             )
