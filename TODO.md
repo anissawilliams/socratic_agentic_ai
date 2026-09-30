@@ -202,3 +202,8 @@
 9. Run full external-tester validation.
 10. Capture the final IRB screenshots.
 
+## Nice to Have
+
+- [ ] Tutor reply length guard: if a reply exceeds ~70 words (or has 2+ questions),
+      regenerate once with a "shorter, one question" note. Smoke test shows ~3% of
+      turns slip (usually overloaded dialectic cases).
