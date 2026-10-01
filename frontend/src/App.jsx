@@ -6,7 +6,7 @@ import TutorApp from "./TutorApp";
 import DemographicsForm from "./components/DemographicsForm";
 import SurveyForm from "./components/SurveyForm";
 import { submitDemographics } from "./api/studyFormsClient";
-import SignOutLink from "./components/SignOutLink";
+import { submitAssessmentOnTimeout } from "./api/timerClient";
 
 import {
   clearParticipantCode,
@@ -160,7 +160,6 @@ function App() {
       />
     );
   }
-
   if (participant.study_status === "demographics") {
     return (
       <DemographicsForm
@@ -175,7 +174,7 @@ function App() {
   if (participant.study_status === "survey") {
     return <SurveyForm onSubmitted={refreshParticipant} />;
   }
-
+  
   if (["pretest", "posttest"].includes(participant.study_status)) {
     if (assessmentLoading) {
       return <p>Loading assessment...</p>;
@@ -192,6 +191,11 @@ function App() {
     return (
       <AssessmentForm
         content={assessment}
+        onTimeout={async (payload) => {
+          await submitAssessmentOnTimeout(payload);
+          setAssessment(null);
+          await refreshParticipant();
+        }}
         onSubmit={async (submission) => {
           await submitAssessment(submission);
           setAssessment(null);

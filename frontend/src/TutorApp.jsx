@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 
 import ChatWindow from "./components/ChatWindow";
 import ChatInput from "./components/ChatInput";
-import SessionTimer from "./components/SessionTimer";
+import PhaseTimer from "./components/PhaseTimer";
+import ScenarioPanel from "./components/ScenarioPanel";
+import { expireTutor, finishTutor } from "./api/timerClient";
 import { useChatSession } from "./hooks/useChatSession";
-import SignOutLink from "./components/SignOutLink";
 
 import "./App.css";
 import "./assets/ai-study.css";
@@ -13,7 +14,6 @@ import aiStudyAvatar from "./assets/ai-study-avatar.png";
 function TutorApp({ onCompleted }) {
   const {
     messages,
-    phase,
     isWaiting,
     isComplete,
     sendMessage,
@@ -24,9 +24,40 @@ function TutorApp({ onCompleted }) {
   const hasStarted = useRef(false);
   const completionHandled = useRef(false);
   const [transitionError, setTransitionError] = useState("");
+  const [timeUp, setTimeUp] = useState(false);
+  const [canContinue, setCanContinue] = useState(false);
+  const [continuing, setContinuing] = useState(false);
 
+  // After the minimum time, the student may choose to move on.
+  const handleContinue = async () => {
+    setContinuing(true);
+    try {
+      await finishTutor();
+      completionHandled.current = true;
+      await onCompleted?.();
+    } catch {
+      setContinuing(false);
+      setTransitionError("Could not move to the next part. Please try again.");
+    }
+  };
 
-  const sessionTime = "20:00";
+  // Time ran out: end the session on the server, then move to the post-test.
+  const handleTimeUp = async () => {
+    setTimeUp(true);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await expireTutor();
+        break;
+      } catch {
+        // The server allows a few seconds of clock tolerance; try again shortly.
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    }
+    completionHandled.current = true;
+    onCompleted?.().catch(() => {
+      setTransitionError("Time is up, but the next part could not be loaded.");
+    });
+  };
   useEffect(() => {
     if (hasStarted.current) {
       return;
@@ -67,24 +98,38 @@ function TutorApp({ onCompleted }) {
         </div>
 
         {!isComplete && (
-         <div className="header-links">
-         {!isComplete && (
-           <button type="button" className="header-link" onClick={resetSession}>
-             New session
-           </button>
-         )}
-         <SignOutLink variant="inline" />
-       </div>
+          <button
+            className="new-session-button"
+            onClick={resetSession}
+          >
+            New session
+          </button>
         )}
 
       </header>
 
-      <SessionTimer
-        sessionTime={sessionTime}
-        visible={true}
-        phase={phase}
-        isComplete={isComplete}
-      />
+      {!isComplete && (
+        <div className="tutor-timer">
+          <PhaseTimer
+            onExpire={handleTimeUp}
+            onMinReached={() => setCanContinue(true)}
+          />
+          {canContinue && !timeUp && (
+            <button
+              type="button"
+              className="tutor-continue"
+              onClick={handleContinue}
+              disabled={continuing || isWaiting}
+            >
+              {continuing ? "Moving on..." : "Continue to next step"}
+            </button>
+          )}
+        </div>
+      )}
+      <ScenarioPanel />
+      {timeUp && !isComplete && (
+        <p className="tutor-time-up">Time is up. Moving on to the next part...</p>
+      )}
 
       <ChatWindow messages={messages}
       isWaiting={isWaiting}
@@ -107,7 +152,7 @@ function TutorApp({ onCompleted }) {
 
       <ChatInput
         onSend={sendMessage}
-        disabled={isWaiting || isComplete}
+        disabled={isWaiting || isComplete || timeUp || continuing}
       />
     </div>
   );

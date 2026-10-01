@@ -5,7 +5,7 @@ from app.api.auth.routes import router as auth_router
 from app.api.assessments import router as assessments_router
 from app.api.study_forms import router as study_forms_router
 from contextlib import asynccontextmanager
-
+from app.api.timer import router as timer_router
 import anyio
 
 
@@ -34,3 +34,4 @@ app.include_router(tutor_router)
 app.include_router(auth_router)
 app.include_router(assessments_router)
 app.include_router(study_forms_router)
+app.include_router(timer_router)

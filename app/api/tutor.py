@@ -8,14 +8,27 @@ from langchain_core.messages import AIMessage, HumanMessage
 from pydantic import BaseModel
 
 from app.api.auth.dependencies import require_participant
+from app.api.timer import tutor_min_time_reached, tutor_time_is_up
 from app.content.scenarios import load_scenario
+from app.content.assessments import load_assessment_instrument
+from app.control.direct_chat import (
+    DIRECT_CHAT_PROMPT_SHA256,
+    opening_message as direct_chat_opening,
+    respond as direct_chat_respond,
+)
 from app.graph.graph import tutor_graph
 from app.graph.state import TutorState, TutorCondition
 from app.services.condition import tutor_condition_for_participant
 from app.services.assignment import current_study_participation
 from app.services.llm import collect_llm_usage
+from app.services.scenario_context import (
+    scenario_context_message,
+    with_scenario_context,
+    without_scenario_context,
+)
 from app.socratic.phases import SocraticPhase
 from app.persistence.sessions import (
+    save_direct_chat_turn,
     create_session,
     fail_turn,
     load_session,
@@ -96,15 +109,6 @@ def start_session(
             detail=str(exc),
         ) from exc
 
-    if state["tutor_condition"] is not TutorCondition.SOCRATIC:
-        raise HTTPException(
-            status_code=501,
-            detail=(
-                f"Tutor condition {state['tutor_condition'].value!r} is assigned "
-                "but not implemented yet. Only the Socratic arm is active in this build."
-            ),
-        )
-
     state["current_turn_id"] = turn_key
     try:
         scenario = load_scenario(participation.tutor_scenario_key)
@@ -113,7 +117,23 @@ def start_session(
             status_code=409,
             detail="Assigned tutor scenario is unavailable in this deployment.",
         ) from exc
-    opening_line = scenario.opening_question
+    try:
+        _, scenario_title = scenario_context_message(participation.pretest_instrument_key)
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Assigned scenario is unavailable in this deployment.",
+        ) from exc
+    state["scenario_key"] = participation.tutor_scenario_key
+
+    is_control = state["tutor_condition"] is TutorCondition.DIRECT_CHAT
+    if is_control:
+        # Student-led: a neutral invitation, no Socratic phases.
+        opening_line = direct_chat_opening(scenario_title)
+        state["current_phase"] = None
+        state["phase_history"] = []
+    else:
+        opening_line = scenario.opening_question
 
     state["messages"] = [AIMessage(content=opening_line)]
 
@@ -121,14 +141,61 @@ def start_session(
         state,
         assigned_condition_code=str(participant["condition"]),
         scenario=scenario,
+        prompt_sha256=DIRECT_CHAT_PROMPT_SHA256 if is_control else None,
     )
 
     return TutorMessageResponse(
         session_id=session_id,
         message=opening_line,
-        current_phase=state["current_phase"].value,
+        current_phase=state["current_phase"].value if state["current_phase"] else None,
         current_turn_id=state["current_turn_id"],
         is_complete=state["is_complete"],
+    )
+
+
+def _direct_chat_turn(state, req, participant, scenario_context, session_key):
+    """Control condition: one assistant reply per turn, no evaluator/router."""
+    turn_id = uuid4()
+    state = deepcopy(state)
+    state["current_turn_id"] = str(turn_id)
+    state["last_student_message"] = req.message
+    history = [*state.get("messages", []), HumanMessage(content=req.message)]
+
+    start_turn(state, phase_before=None, prompt_sha256=DIRECT_CHAT_PROMPT_SHA256)
+    started = perf_counter()
+    try:
+        with collect_llm_usage() as usage:
+            reply = direct_chat_respond(with_scenario_context(history, scenario_context))
+        latency_ms = round((perf_counter() - started) * 1000)
+        save_direct_chat_turn(
+            state,
+            tutor_response=reply.text,
+            latency_ms=latency_ms,
+            input_tokens=usage.input_tokens,
+            output_tokens=usage.output_tokens,
+        )
+    except Exception as exc:
+        try:
+            fail_turn(
+                state,
+                exc,
+                latency_ms=round((perf_counter() - started) * 1000),
+                input_tokens=usage.input_tokens,
+                output_tokens=usage.output_tokens,
+            )
+        except Exception:
+            logger.exception("Failed to persist terminal failure for tutor turn %s", turn_id)
+        raise
+
+    state["messages"] = [*history, AIMessage(content=reply.text)]
+    _sessions[session_key] = state
+
+    return TutorMessageResponse(
+        session_id=req.session_id,
+        current_turn_id=turn_id,
+        message=reply.text,
+        current_phase=None,
+        is_complete=False,
     )
 
 
@@ -140,6 +207,9 @@ def send_message(
     req: TutorMessageRequest,
     participant: dict = Depends(require_participant),
 ):
+    if tutor_time_is_up(str(req.session_id)):
+        raise HTTPException(status_code=409, detail="time_up")
+
     session_key = str(req.session_id)
     turn_id = uuid4()
     turn_key = str(turn_id)
@@ -169,18 +239,31 @@ def send_message(
             detail="This tutoring session is complete. Start a new session.",
     )
 
+    try:
+        participation = current_study_participation(str(participant["id"]))
+        scenario_context, _ = scenario_context_message(participation.pretest_instrument_key)
+    except (ValueError, FileNotFoundError) as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+    if state["tutor_condition"] is TutorCondition.DIRECT_CHAT:
+        return _direct_chat_turn(state, req, participant, scenario_context, session_key)
+
     # Work on a copy so a failed invocation cannot contaminate the in-memory
     # representation of the last successfully completed turn.
     state = deepcopy(state)
+    state["scenario_key"] = participation.tutor_scenario_key
     state["current_turn_id"] = turn_key
     state["last_student_message"] = req.message
+    state["min_time_reached"] = tutor_min_time_reached(session_key)
     state["route_decision"] = None
     state["response_evaluation"] = None
 
-    state["messages"] = [
-        *state.get("messages", []),
-        HumanMessage(content=req.message),
-    ]
+    # The scenario text rides along as context for every model call this
+    # turn (tutor, evaluator, router). It is stripped before caching.
+    state["messages"] = with_scenario_context(
+        [*state.get("messages", []), HumanMessage(content=req.message)],
+        scenario_context,
+    )
 
     messages_before = len(state["messages"])
 
@@ -217,10 +300,10 @@ def send_message(
             logger.exception("Failed to persist terminal failure for tutor turn %s", turn_key)
         raise
 
-    _sessions[session_key] = result
-
     # Return only messages generated during this graph invocation.
     generated = result["messages"][messages_before:]
+    result["messages"] = without_scenario_context(result["messages"])
+    _sessions[session_key] = result
     tutor_message = generated[-1].text if generated else ""
 
     current_phase = result["current_phase"]
@@ -236,3 +319,22 @@ def send_message(
         ),
         is_complete=result["is_complete"],
     )
+
+class TutorScenarioResponse(BaseModel):
+    title: str
+    text: str
+
+
+@router.get("/tutor/scenario", response_model=TutorScenarioResponse)
+def get_tutor_scenario(participant: dict = Depends(require_participant)):
+    """The pretest scenario, shown above the chat in both conditions."""
+    try:
+        participation = current_study_participation(str(participant["id"]))
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+    if participation.status != "tutor":
+        raise HTTPException(status_code=409, detail="Not at the AI step.")
+
+    content = load_assessment_instrument(participation.pretest_instrument_key).pretest
+    return TutorScenarioResponse(title=content.scenario_title, text=content.scenario_text)

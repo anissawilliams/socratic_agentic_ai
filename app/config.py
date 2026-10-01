@@ -14,3 +14,19 @@ APPLICATION_REVISION = (
     or os.getenv("GIT_COMMIT_SHA")
     or "development"
 )
+# Per-phase minimum and maximum times, in seconds. Change with environment
+# variables (local .env / Railway); no code change needed.
+# Demographics and the survey are untimed.
+
+PHASE_MIN_SECONDS = {
+    "pretest": int(os.getenv("PRETEST_MIN_SECONDS", "420")),     # 7 min
+    "tutor": int(os.getenv("TUTOR_MIN_SECONDS", "840")),         # 14 min
+    "posttest": int(os.getenv("POSTTEST_MIN_SECONDS", "420")),   # 7 min
+}
+
+PHASE_TIME_LIMITS_SECONDS = {
+    "pretest": int(os.getenv("PRETEST_SECONDS", "540")),         # 9 min
+    "tutor": int(os.getenv("TUTOR_SECONDS", "1080")),            # 18 min
+    "posttest": int(os.getenv("POSTTEST_SECONDS", "540")),       # 9 min
+}
+

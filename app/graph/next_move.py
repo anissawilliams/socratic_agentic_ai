@@ -62,6 +62,15 @@ def _runtime_context(
             if response_evaluation
             else None
         ),
+        "session_continuation": (
+            "The learner has already met the session objective, but the "
+            "session continues until the minimum time. Choose a more "
+            "challenging move that builds on their account: apply it to a "
+            "harder case, test a limit they have not considered, or ask them "
+            "to weigh competing considerations. Do not repeat covered ground."
+            if response_evaluation and response_evaluation.session_goal_satisfied
+            else None
+        ),
     }
 
 def _invoke_router(

@@ -1,0 +1,83 @@
+# Round 1 near-transfer instrument (finalized scenarios, Version 2).
+# Pretest: Targeting Energy Assistance. Posttest: Reducing City Traffic.
+# Bump `version` (and the scenario_version that changed) on ANY text edit.
+
+key: round1_energy_traffic
+version: 1.0.0
+status: active
+transfer_type: near
+cohort: round1
+
+# Both AI conditions discuss the pretest scenario. The tutor must never
+# receive the learner's pretest answers.
+tutor_scenario_key: energy_assistance
+
+pretest:
+  scenario_key: energy_assistance
+  scenario_version: 1.0.0
+  scenario_title: Targeting Energy Assistance
+  scenario_text: |-
+    A regional government provides winter energy assistance to 10,000 eligible low-income households, but its current budget allows it to provide enhanced assistance to only 400 households this year.
+
+    The government is considering a data-driven system to help identify households most likely to experience severe energy hardship. The system was tested on a random sample of 3,000 eligible households:
+
+    • 600 were classified as "high risk"; 420 later experienced severe energy hardship.
+    • 2,400 were classified as "lower risk"; 180 later experienced severe energy hardship.
+    • Historically, about 20% of eligible households experience severe energy hardship each winter.
+    • The current system only classifies households as "high risk" or "lower risk"; it does not rank households within each group.
+    • Immigrant households were flagged more often than other households. Officials have not yet determined whether this reflects differences in actual economic vulnerability or differences in the model's error rates across groups.
+
+    The government must decide whether to use the system now, modify or test it further, or combine it with other criteria when allocating the 400 available assistance slots.
+
+    Task: Based only on the information above, recommend what the government should do.
+  questions:
+    - id: pre_q1
+      construct: recommendation
+      prompt: What do you recommend?
+    - id: pre_q2
+      construct: evidence_reasoning
+      prompt: What information or evidence is most important in reaching your recommendation, and why?
+    - id: pre_q3
+      construct: counterargument
+      prompt: What is the strongest concern or argument against your recommendation?
+    - id: pre_q4
+      construct: uncertainty_revision
+      prompt: What uncertainty or new information could change your decision?
+
+posttest:
+  scenario_key: city_traffic
+  scenario_version: 1.0.0
+  scenario_title: Reducing City Traffic
+  scenario_text: |-
+    A fictional city of 600,000 residents is trying to reduce traffic congestion and air pollution in its city center. About 100,000 cars enter the city center on a typical weekday.
+
+    The city is considering two major policies:
+
+    Option A: Congestion charge
+    • Drivers would pay €8 to enter the city center on weekdays.
+    • A six-month pilot study estimates that car traffic could decrease by about 18%.
+    • The policy would generate revenue that could be used for transportation improvements.
+    • However, some lower-income workers rely on cars because public transportation is limited in the areas where they live.
+
+    Option B: Public transportation subsidy
+    • Bus and metro fares would be reduced by 40%.
+    • A six-month pilot study estimates that car traffic could decrease by about 10%.
+    • The policy would make transportation more affordable, particularly for lower-income residents.
+    • However, it would require substantial ongoing public funding.
+
+    The city currently has enough funding to fully implement only one of the two policies. Because the estimates come from short pilot studies, their long-term effects are uncertain.
+
+    Task: Recommend which policy the city should adopt, or propose a realistic modification of one of the policies.
+  questions:
+    - id: post_q1
+      construct: recommendation
+      prompt: What do you recommend?
+    - id: post_q2
+      construct: evidence_reasoning
+      prompt: What information or evidence is most important in reaching your recommendation, and why?
+    - id: post_q3
+      construct: counterargument
+      prompt: What is the strongest concern or argument against your recommendation?
+    - id: post_q4
+      construct: uncertainty_revision
+      prompt: What uncertainty or new information could change your decision?

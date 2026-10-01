@@ -9,6 +9,11 @@ const GENDER_OPTIONS = [
   { code: "non_binary", label: "Non-binary" },
 ];
 
+const ACADEMIC_LEVEL_OPTIONS = [
+  { code: "undergraduate", label: "Undergraduate" },
+  { code: "graduate", label: "Graduate" },
+];
+
 const RACE_OPTIONS = [
   { code: "white_european", label: "White / European" },
   { code: "black_african", label: "Black / African" },
@@ -21,6 +26,7 @@ const RACE_OPTIONS = [
 export default function DemographicsForm({ onSubmit }) {
   const [age, setAge] = useState("");
   const [genderCode, setGenderCode] = useState("");
+  const [academicLevel, setAcademicLevel] = useState("");
   const [raceCodes, setRaceCodes] = useState([]);
   const [otherDescription, setOtherDescription] = useState("");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
@@ -54,6 +60,7 @@ export default function DemographicsForm({ onSubmit }) {
       await onSubmit({
         age: ageNumber,
         gender_code: genderCode,
+        academic_level_code: academicLevel,
         race_codes: raceCodes,
         race_other_description: raceCodes.includes("other")
           ? otherDescription.trim()
@@ -76,7 +83,7 @@ export default function DemographicsForm({ onSubmit }) {
         </header>
 
         <label className="assessment-form__question">
-          <span>1. How old are you?</span>
+          <span>1. What is your age?</span>
           <span className="assessment-form__inline">
             <input
               type="number"
@@ -110,8 +117,25 @@ export default function DemographicsForm({ onSubmit }) {
         </fieldset>
 
         <fieldset className="assessment-form__question">
+          <legend>3. Are you an undergraduate or graduate student?</legend>
+          {ACADEMIC_LEVEL_OPTIONS.map((option) => (
+            <label key={option.code} className="assessment-form__choice">
+              <input
+                type="radio"
+                name="academic-level"
+                value={option.code}
+                checked={academicLevel === option.code}
+                onChange={() => setAcademicLevel(option.code)}
+                required
+              />
+              {option.label}
+            </label>
+          ))}
+        </fieldset>
+
+        <fieldset className="assessment-form__question">
           <legend>
-            3. How would you describe your racial and/or ethnic background?
+            4. How would you describe your racial and/or ethnic background?
             (Select all that apply.)
           </legend>
           {RACE_OPTIONS.map((option) => (
@@ -138,7 +162,7 @@ export default function DemographicsForm({ onSubmit }) {
         </fieldset>
 
         <label className="assessment-form__question">
-          <span>4. What is your field of study (major)?</span>
+          <span>5. What is your field of study (major)?</span>
           <input
             type="text"
             className="assessment-form__wide"

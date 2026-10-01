@@ -26,20 +26,18 @@ from scripts.provision_test_participants import create_participant
 
 # Plausible student replies, cycled until the tutor ends the session.
 STUDENT_REPLIES = [
-    "No, I think there should be more to consider than just citations.",
-    "The methods and whether the data is available.",
-    "Citations show a paper is popular. People might cite it because it backs up what they want to be true.",
+    "I think they should use the system, but not as the only way to decide.",
+    "The high-risk group had 420 of 600 households in hardship, which is much higher than the 20% overall rate.",
+    "But it also missed 180 households that ended up in hardship, so some people who need help would be left out.",
     "idk",
-    "I didn't say citations are useless, just that they're not enough on their own.",
+    "I didn't say the system is useless, just that it shouldn't decide everything on its own.",
     "Yeah.",
-    "Maybe the students who do that are just more motivated to begin with.",
-    "I'd look at the methods, check if the results hold up, and see if the citing paper uses it honestly.",
-    "Newer studies aren't automatically better, but they might use better data.",
-    "I'd check whether the people citing it actually tested its claims or just repeated them.",
-    "Overall: citations show a paper is influential, not that it's good. I'd judge "
-    "quality by how the study was done, whether the evidence is recent and actually "
-    "matches the claim, how broad the claim is compared to who was studied, and "
-    "whether papers citing it use it fairly.",
+    "There are 600 high-risk households but only 400 slots, so they still need another way to choose.",
+    "The immigrant households being flagged more often worries me, because we don't know if the errors are equal.",
+    "I'd use it as one factor, add a lottery or clear criteria within the high-risk group, and test the error rates by group.",
+    "Overall: use the system as a screening tool, not the final decision. It clearly predicts hardship better than chance, "
+    "but it misses some households, can't rank within the high-risk group, and might have unequal errors for immigrant "
+    "households, so they should combine it with other criteria, allow appeals, and test fairness before relying on it.",
 ]
 
 WORD_LIMIT = 60
@@ -113,6 +111,7 @@ def check_voice(text: str) -> list[str]:
 
 
 def run_participant(index: int, args) -> dict:
+    is_control = args.condition == "direct_chat"
     result = {"index": index, "ok": False, "log": [], "turns": [], "code": None}
     log = result["log"].append
 
@@ -121,11 +120,11 @@ def run_participant(index: int, args) -> dict:
             round_number=1,
             condition=args.condition,
             cohort_code="smoke",
-            pretest_instrument_key="test_near_transfer",
-            pretest_scenario_key="test_citation_pre",
-            tutor_scenario_key="citation_quality",
-            posttest_instrument_key="test_near_transfer",
-            posttest_scenario_key="test_citation_post",
+            pretest_instrument_key=args.instrument,
+            pretest_scenario_key=args.pretest_scenario,
+            tutor_scenario_key=args.tutor_scenario,
+            posttest_instrument_key=args.instrument,
+            posttest_scenario_key=args.posttest_scenario,
             index=index,
         )
         result["code"] = created["participant_code"]
@@ -137,7 +136,13 @@ def run_participant(index: int, args) -> dict:
         client.call(
             "POST",
             "/study/demographics",
-            json={"age": 20, "gender_code": "female", "race_codes": ["asian"], "field_of_study": "Psychology"},
+            json={
+                "age": 24,
+                "gender_code": "female",
+                "academic_level_code": "graduate",
+                "race_codes": ["asian"],
+                "field_of_study": "Political Science",
+            },
         )
         expect_status(client, "pretest", "demographics submit")
         log("PASS demographics submitted, status=pretest")
@@ -147,10 +152,17 @@ def run_participant(index: int, args) -> dict:
         log("PASS pretest submitted, status=tutor")
 
         start = client.call("GET", "/tutor/start")
+        # Read the timer once, as the browser does, so the session's time
+        # limits are stamped (needed for "Continue to next step").
+        client.call("GET", "/study/timer")
         session_id = start["session_id"]
         complete = start["is_complete"]
         turns = 0
         while not complete:
+            if is_control and turns >= args.control_turns:
+                # Control sessions end by the student's choice (or the timer).
+                client.call("POST", "/study/timer/finish-tutor")
+                break
             if turns >= args.max_turns:
                 raise Fail(f"tutor did not complete within {args.max_turns} turns")
             reply = STUDENT_REPLIES[min(turns, len(STUDENT_REPLIES) - 1)]
@@ -165,10 +177,14 @@ def run_participant(index: int, args) -> dict:
                     "phase": data["current_phase"],
                     "student": reply,
                     "tutor": data["message"],
-                    "issues": [] if complete else check_voice(data["message"]),
+                    # Length/question checks apply to the Socratic voice only.
+                    "issues": [] if (complete or is_control) else check_voice(data["message"]),
                 }
             )
-        log(f"PASS tutor completed in {turns} turns")
+        log(
+            f"PASS tutor {'finished by participant' if is_control else 'completed'} "
+            f"after {turns} turns"
+        )
 
         # The frontend relies on this transition happening with the final turn.
         expect_status(client, "posttest", "tutor completion")
@@ -191,7 +207,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--users", type=int, default=3)
     parser.add_argument("--base-url", default=os.getenv("SMOKE_BASE_URL", "http://localhost:8000"))
-    parser.add_argument("--condition", default="scenario_questioning")
+    parser.add_argument("--condition", default="scenario_questioning",
+                        help="scenario_questioning (Socratic) or direct_chat (control)")
+    parser.add_argument("--instrument", default="round1_energy_traffic")
+    parser.add_argument("--pretest-scenario", default="energy_assistance")
+    parser.add_argument("--tutor-scenario", default="energy_assistance")
+    parser.add_argument("--posttest-scenario", default="city_traffic")
+    parser.add_argument("--control-turns", type=int, default=3,
+                        help="control: turns before choosing 'Continue to next step'")
     parser.add_argument("--max-turns", type=int, default=25)
     parser.add_argument("--show-transcripts", action="store_true")
     args = parser.parse_args()

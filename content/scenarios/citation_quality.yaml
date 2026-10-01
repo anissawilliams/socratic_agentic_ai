@@ -3,7 +3,7 @@
 # actually see". Bump `version` whenever any text below changes.
 
 key: citation_quality
-version: 1.0.0
+version: 1.1.0
 title: Citation count as a quality signal
 
 # The tutor's first turn. The learner's reply is the position elenchus
@@ -18,6 +18,10 @@ opening_question: >-
 
 learning_objective: >-
   Evaluate the quality and reliability of a scholarly paper without
-  treating citation count as a proxy for quality, distinguishing
-  scholarly influence, original research conduct, current claim-level
-  evidence, claim scope and centrality, and appropriate citation use.
+  treating citation count as a proxy for quality. A strong account
+  separates a paper's influence from its quality and judges quality
+  using factors such as how the research was conducted, whether current
+  evidence supports its claims, whether the claims fit the evidence's
+  scope, and whether citations are used appropriately. The learner does
+  not need to address every factor; a well-reasoned account that
+  applies several of them is sufficient.

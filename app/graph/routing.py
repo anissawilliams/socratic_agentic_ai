@@ -11,7 +11,7 @@ def route_after_evaluation(state: TutorState) -> str:
             "Cannot route after evaluation without a response evaluation."
         )
 
-    if evaluation.session_goal_satisfied:
+    if evaluation.session_goal_satisfied and state.get("min_time_reached", True):
         return "complete_session"
 
     return "choose_next_move"

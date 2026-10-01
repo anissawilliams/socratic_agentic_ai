@@ -30,4 +30,6 @@ class TutorState(TypedDict):
     current_turn_id: str | None
     last_student_message: str
     is_complete: bool
+    min_time_reached: bool
+    scenario_key: str | None
     completed_at: str | None

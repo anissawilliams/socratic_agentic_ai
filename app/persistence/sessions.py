@@ -66,6 +66,7 @@ def create_session(
     *,
     assigned_condition_code: str,
     scenario: Scenario,
+    prompt_sha256: str | None = None,
 ) -> None:
     """Persist a new session and its opening message atomically."""
     opening_message = str(state["messages"][0].content)
@@ -84,7 +85,7 @@ def create_session(
             "p_tutor_prompt_bundle_key": provenance.key,
             "p_tutor_prompt_bundle_version": provenance.version,
             "p_tutor_prompt_bundle_sha256": provenance.sha256,
-            "p_prompt_sha256": provenance.tutor_prompt_sha256,
+            "p_prompt_sha256": prompt_sha256 or provenance.tutor_prompt_sha256,
             "p_application_revision": provenance.application_revision,
             "p_model_name": LLM_MODEL,
             "p_opening_turn_id": state["current_turn_id"],
@@ -97,7 +98,8 @@ def create_session(
 def start_turn(
     state: TutorState,
     *,
-    phase_before: SocraticPhase,
+    phase_before: SocraticPhase | None,
+    prompt_sha256: str | None = None,
 ) -> None:
     """Create the durable started row before invoking any model."""
     provenance = prompt_bundle_provenance()
@@ -108,12 +110,12 @@ def start_turn(
             "p_session_id": state["session_id"],
             "p_participant_id": state["participant_id"],
             "p_student_message": state["last_student_message"],
-            "p_phase_before_code": phase_before.value,
+            "p_phase_before_code": _value(phase_before),
             "p_model_name": LLM_MODEL,
             "p_tutor_prompt_bundle_key": provenance.key,
             "p_tutor_prompt_bundle_version": provenance.version,
             "p_tutor_prompt_bundle_sha256": provenance.sha256,
-            "p_prompt_sha256": provenance.tutor_prompt_sha256,
+            "p_prompt_sha256": prompt_sha256 or provenance.tutor_prompt_sha256,
             "p_application_revision": provenance.application_revision,
         },
     ))
@@ -187,6 +189,30 @@ def save_turn(
         ),
     }
     _execute(get_supabase_client().rpc("record_tutor_turn", params))
+
+
+def save_direct_chat_turn(
+    state: TutorState,
+    *,
+    tutor_response: str,
+    latency_ms: int,
+    input_tokens: int | None,
+    output_tokens: int | None,
+) -> None:
+    """Record a control-condition turn: same turn row, no evaluation or routing."""
+    _execute(get_supabase_client().rpc(
+        "record_direct_chat_turn",
+        {
+            "p_turn_id": state["current_turn_id"],
+            "p_session_id": state["session_id"],
+            "p_participant_id": state["participant_id"],
+            "p_tutor_response": tutor_response,
+            "p_completed_at": datetime.now(timezone.utc).isoformat(),
+            "p_latency_ms": latency_ms,
+            "p_input_tokens": input_tokens,
+            "p_output_tokens": output_tokens,
+        },
+    ))
 
 
 def fail_turn(

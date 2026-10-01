@@ -27,6 +27,8 @@ SURVEY_PATH = (
 
 GenderCode = Literal["male", "female", "non_binary"]
 
+AcademicLevelCode = Literal["undergraduate", "graduate"]
+
 RaceCode = Literal[
     "white_european",
     "black_african",
@@ -78,6 +80,7 @@ def _survey() -> dict:
 class DemographicsSubmission(BaseModel):
     age: int = Field(ge=18, le=99)
     gender_code: GenderCode
+    academic_level_code: AcademicLevelCode
     race_codes: list[RaceCode] = Field(min_length=1)
     race_other_description: str | None = Field(default=None, max_length=100)
     field_of_study: str = Field(min_length=1, max_length=100)
@@ -111,6 +114,7 @@ def submit_demographics(
             "p_participant_id": str(participant["id"]),
             "p_age": submission.age,
             "p_gender_code": submission.gender_code,
+            "p_academic_level_code": submission.academic_level_code,
             **{
                 f"p_race_{code}": code in submission.race_codes
                 for code in RaceCode.__args__

@@ -235,3 +235,23 @@
     text-align: left;
   }
 }
+
+/* ---------- Timer + time-up notice ---------- */
+
+.assessment-form__timer {
+  display: flex;
+  justify-content: flex-end;
+  margin: -12px 0 12px;
+}
+
+.assessment-form__notice {
+  margin-top: 20px !important;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--blue-soft, #edf7fc);
+}
+
+/* Keep scenario paragraphs and bullet lists as written */
+.assessment-form__scenario p {
+  white-space: pre-line;
+}

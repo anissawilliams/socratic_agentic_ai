@@ -1,0 +1,43 @@
+/* Identical across study conditions. */
+.phase-timer-wrap {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.phase-timer {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--border, #dce8f0);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text-muted, #5f7081);
+  font-size: 0.85rem;
+  transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
+}
+
+.phase-timer__value {
+  color: var(--text, #243342);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Final two minutes */
+.phase-timer--final {
+  border-color: #f0c4c0;
+  background: #fdf3f2;
+  color: #a33a3a;
+}
+
+.phase-timer--final .phase-timer__value {
+  color: #b3261e;
+}
+
+.phase-timer__note {
+  color: var(--text-muted, #5f7081);
+  font-size: 0.82rem;
+}

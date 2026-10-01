@@ -1,0 +1,29 @@
+# Socratic tutor content for the Round 1 pretest scenario.
+# DRAFT for research-team review: opening_question and learning_objective.
+# Bump `version` whenever any text below changes.
+
+key: energy_assistance
+version: 0.1.0
+title: Targeting Energy Assistance
+
+# The tutor's first turn: invites a stated position for elenchus to examine.
+opening_question: >-
+  Looking at the energy assistance scenario, what do you think the government
+  should do with this data-driven system, and what is your main reason?
+
+# Used by the evaluator to judge progress. Never shown to students.
+learning_objective: >-
+  Reach and justify a recommendation about how the government should use,
+  modify, test, or combine the risk-classification system when allocating
+  the 400 assistance slots, reasoning from the evidence provided. A strong
+  account interprets the test results correctly (for example, about 70% of
+  households classified as high risk experienced severe hardship, compared
+  with about 20% overall, while 180 of the 600 households that experienced
+  hardship were classified as lower risk); recognizes that 600 high-risk
+  households exceed the 400 available slots and that the system cannot rank
+  households within a group; weighs the unresolved fairness question about
+  immigrant households being flagged more often; considers the strongest
+  argument against the chosen approach; and identifies what uncertainty or
+  new information could change the decision. The learner does not need to
+  address every factor; a well-reasoned account that applies several of
+  them is sufficient.

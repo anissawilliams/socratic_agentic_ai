@@ -52,6 +52,22 @@ def _required_text(data: dict, field: str, context: str) -> str:
     return " ".join(value.split())
 
 
+def _required_multiline_text(data: dict, field: str, context: str) -> str:
+    """Like _required_text, but keeps line and paragraph breaks.
+
+    Scenario text has paragraphs and bullet lists that participants need to
+    read as written; only spaces within each line are normalized.
+    """
+    value = str(data.get(field, "")).strip()
+    if not value:
+        raise ValueError(f"{context} is missing required field {field!r}")
+    lines = [" ".join(line.split()) for line in value.splitlines()]
+    text = "\n".join(lines)
+    while "\n\n\n" in text:
+        text = text.replace("\n\n\n", "\n\n")
+    return text
+
+
 def _load_stage(data: dict, stage: AssessmentStage) -> AssessmentStageContent:
     context = f"{stage} content"
     questions_data = data.get("questions")
@@ -81,7 +97,7 @@ def _load_stage(data: dict, stage: AssessmentStage) -> AssessmentStageContent:
     scenario_key = _required_text(data, "scenario_key", context)
     scenario_version = _required_text(data, "scenario_version", context)
     scenario_title = _required_text(data, "scenario_title", context)
-    scenario_text = _required_text(data, "scenario_text", context)
+    scenario_text = _required_multiline_text(data, "scenario_text", context)
     scenario_canonical = json.dumps(
         {
             "key": scenario_key,

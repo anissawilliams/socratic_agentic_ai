@@ -5,7 +5,8 @@ from app.content.scenarios import load_scenario
 
 def evaluate_student_response(state: TutorState) -> dict:
     current_phase = state["current_phase"]
-    scenario = load_scenario()
+    # The participant's assigned scenario, never the module default.
+    scenario = load_scenario(state["scenario_key"]) if state.get("scenario_key") else load_scenario()
     session_goal = scenario.learning_objective
 
     if current_phase is None:

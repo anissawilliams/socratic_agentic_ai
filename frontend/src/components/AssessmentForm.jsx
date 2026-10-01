@@ -1,16 +1,44 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+
+import PhaseTimer from "./PhaseTimer";
 
 import "./AssessmentForm.css";
 
 
-export default function AssessmentForm({ content, onSubmit, onSkip }) {
+export default function AssessmentForm({ content, onSubmit, onTimeout, onSkip }) {
   const [answers, setAnswers] = useState({});
+  const answersRef = useRef({});
+  const [timedOut, setTimedOut] = useState(false);
+  const [canContinue, setCanContinue] = useState(!onTimeout);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const isPreTest = content.stage === "pretest";
 
   const updateAnswer = (questionId, value) => {
-    setAnswers((current) => ({ ...current, [questionId]: value }));
+    setAnswers((current) => {
+      const next = { ...current, [questionId]: value };
+      answersRef.current = next;
+      return next;
+    });
+  };
+
+  // Time ran out: save whatever the student has written, blanks included.
+  const handleTimeout = async () => {
+    setTimedOut(true);
+    setError("");
+    try {
+      await onTimeout({
+        instrument_key: content.instrument_key,
+        attempt_id: content.attempt_id,
+        stage: content.stage,
+        answers: content.questions.map((question) => ({
+          question_id: question.id,
+          value: answersRef.current[question.id] || "",
+        })),
+      });
+    } catch {
+      setError("Time is up, but your answers could not be saved. Please refresh the page.");
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -41,13 +69,22 @@ export default function AssessmentForm({ content, onSubmit, onSkip }) {
   return (
     <main className="assessment-shell">
       <form className="assessment-form" onSubmit={handleSubmit}>
-      <header>
-        <p className="assessment-form__eyebrow">
-          {isPreTest ? "Part 1 · Before the conversation" : "Part 3 · After the conversation"}
-        </p>
-        <h1>A few questions</h1>
-        <p>Answer in your own words. There's no AI help on this part.</p>
-      </header>
+        {onTimeout && (
+          <div className="assessment-form__timer">
+            <PhaseTimer
+              onExpire={handleTimeout}
+              onMinReached={() => setCanContinue(true)}
+            />
+          </div>
+        )}
+
+        <header>
+          <p className="assessment-form__eyebrow">
+            {isPreTest ? "Before the conversation" : "After the conversation"}
+          </p>
+          <h1>{isPreTest ? "Pre-test" : "Post-test"}</h1>
+          <p>No AI feedback is provided during this assessment.</p>
+        </header>
 
         <section className="assessment-form__scenario">
           <h2>{content.scenario_title}</h2>
@@ -64,9 +101,14 @@ export default function AssessmentForm({ content, onSubmit, onSkip }) {
               onChange={(event) => updateAnswer(question.id, event.target.value)}
               rows={5}
               required
+              disabled={timedOut}
             />
           </label>
         ))}
+
+        {timedOut && !error && (
+          <p className="assessment-form__notice">Time is up. Saving your answers...</p>
+        )}
 
         {error && <p className="assessment-form__error">{error}</p>}
 
@@ -76,7 +118,11 @@ export default function AssessmentForm({ content, onSubmit, onSkip }) {
               Continue without submitting
             </button>
           )}
-          <button type="submit" disabled={submitting}>
+          <button
+            type="submit"
+            disabled={submitting || timedOut || !canContinue}
+            title={canContinue ? undefined : "Available once the minimum time has passed"}
+          >
             {submitting ? "Saving..." : "Submit responses"}
           </button>
         </div>
