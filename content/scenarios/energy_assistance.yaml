@@ -3,7 +3,7 @@
 # Bump `version` whenever any text below changes.
 
 key: energy_assistance
-version: 0.1.0
+version: 0.1.1
 title: Targeting Energy Assistance
 
 # The tutor's first turn: invites a stated position for elenchus to examine.
@@ -19,8 +19,11 @@ learning_objective: >-
   account interprets the test results correctly (for example, about 70% of
   households classified as high risk experienced severe hardship, compared
   with about 20% overall, while 180 of the 600 households that experienced
-  hardship were classified as lower risk); recognizes that 600 high-risk
-  households exceed the 400 available slots and that the system cannot rank
+  hardship were classified as lower risk); recognizes that the high-risk 
+  group is larger than the 400 available slots
+  (about 20% of households were flagged in the test sample, which would be
+  roughly 2,000 of the 10,000 eligible households) and that the system cannot
+  rank households within a group; 
   households within a group; weighs the unresolved fairness question about
   immigrant households being flagged more often; considers the strongest
   argument against the chosen approach; and identifies what uncertainty or
