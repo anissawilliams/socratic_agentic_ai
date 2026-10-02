@@ -4,6 +4,7 @@ import ChatWindow from "./components/ChatWindow";
 import ChatInput from "./components/ChatInput";
 import PhaseTimer from "./components/PhaseTimer";
 import ScenarioPanel from "./components/ScenarioPanel";
+import SignOutLink from "./components/SignOutLink";
 import { expireTutor, finishTutor } from "./api/timerClient";
 import { useChatSession } from "./hooks/useChatSession";
 
@@ -17,7 +18,6 @@ function TutorApp({ onCompleted }) {
     isWaiting,
     isComplete,
     sendMessage,
-    resetSession,
     startSession,
   } = useChatSession();
 
@@ -97,14 +97,9 @@ function TutorApp({ onCompleted }) {
           </div>
         </div>
 
-        {!isComplete && (
-          <button
-            className="new-session-button"
-            onClick={resetSession}
-          >
-            New session
-          </button>
-        )}
+        <div className="header-links">
+          <SignOutLink variant="inline" />
+        </div>
 
       </header>
 
