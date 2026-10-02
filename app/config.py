@@ -8,6 +8,18 @@ SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
+# Per-role models. The tutor voices and the control assistant always use
+# LLM_MODEL (so both conditions share one model). The evaluator and router
+# are behind-the-scenes judges and may use a different model.
+LLM_MODEL_EVALUATOR = os.getenv("LLM_MODEL_EVALUATOR") or LLM_MODEL
+LLM_MODEL_ROUTER = os.getenv("LLM_MODEL_ROUTER") or LLM_MODEL
+# Comma-separated models that reject a temperature setting (some reasoning
+# models). Leave empty unless a model errors on temperature.
+LLM_NO_TEMPERATURE_MODELS = {
+    name.strip()
+    for name in os.getenv("LLM_NO_TEMPERATURE_MODELS", "").split(",")
+    if name.strip()
+}
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.7"))
 APPLICATION_REVISION = (
     os.getenv("RAILWAY_GIT_COMMIT_SHA")

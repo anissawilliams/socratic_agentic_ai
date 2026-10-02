@@ -8,7 +8,7 @@ import httpx
 
 from langchain_core.messages import AIMessage, HumanMessage
 
-from app.config import LLM_MODEL
+from app.config import LLM_MODEL, LLM_MODEL_EVALUATOR, LLM_MODEL_ROUTER
 from app.content.scenarios import Scenario
 from app.graph.state import TutorCondition, TutorState
 from app.models.evaluation import ResponseEvaluation
@@ -166,7 +166,7 @@ def save_turn(
         "p_session_goal_satisfied": evaluation.session_goal_satisfied,
         "p_session_unresolved_issue": evaluation.session_unresolved_issue,
         "p_session_completion_reason": evaluation.session_completion_reason,
-        "p_evaluator_model_name": LLM_MODEL,
+        "p_evaluator_model_name": LLM_MODEL_EVALUATOR,
         "p_evaluator_prompt_version": provenance.evaluator_prompt_version,
         "p_evaluator_prompt_sha256": provenance.evaluator_prompt_sha256,
         "p_evaluator_application_revision": provenance.application_revision,
@@ -177,7 +177,7 @@ def save_turn(
         "p_routing_target": route.target if route else None,
         "p_routing_reasoning_summary": route.reasoning_summary if route else None,
         "p_routing_avoid_repeating": route.avoid_repeating if route else [],
-        "p_router_model_name": LLM_MODEL if route else None,
+        "p_router_model_name": LLM_MODEL_ROUTER if route else None,
         "p_router_prompt_version": (
             provenance.router_prompt_version if route else None
         ),

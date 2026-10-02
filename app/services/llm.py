@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from app.config import (
     LLM_MODEL,
+    LLM_NO_TEMPERATURE_MODELS,
     LLM_TEMPERATURE,
     OPENAI_API_KEY,
 )
@@ -53,17 +54,22 @@ def collect_llm_usage():
         _usage_collector.reset(token)
 
 
-@lru_cache(maxsize=1)
-def get_chat_model() -> ChatOpenAI:
-    """Shared ChatOpenAI client. Agents must not construct their own."""
+@lru_cache(maxsize=8)
+def get_chat_model(model: str | None = None) -> ChatOpenAI:
+    """Shared ChatOpenAI client per model. Agents must not construct their own."""
     if not OPENAI_API_KEY:
         raise RuntimeError("OPENAI_API_KEY must be configured.")
 
-    return ChatOpenAI(
-        model=LLM_MODEL,
-        api_key=OPENAI_API_KEY,
-        temperature=LLM_TEMPERATURE,
-    )
+    name = model or LLM_MODEL
+    settings = {
+        "model": name,
+        "api_key": OPENAI_API_KEY,
+        "max_retries": 6,   # rides out brief rate-limit spikes
+        "timeout": 90,
+    }
+    if name not in LLM_NO_TEMPERATURE_MODELS:
+        settings["temperature"] = LLM_TEMPERATURE
+    return ChatOpenAI(**settings)
 
 
 def llm_metadata() -> dict[str, str | float]:
@@ -85,6 +91,7 @@ def llm_metadata() -> dict[str, str | float]:
 def complete(
     messages: Sequence[BaseMessage],
     *,
+    model: str | None = None,
     system: str | None = None,
     run_name: str | None = None,
     metadata: dict | None = None,
@@ -104,7 +111,8 @@ def complete(
     if run_name is not None:
         config["run_name"] = run_name
 
-    response = get_chat_model().invoke(payload, config=config)
+    config["metadata"]["model"] = model or LLM_MODEL
+    response = get_chat_model(model).invoke(payload, config=config)
     _record_usage(response)
     return response
 
@@ -115,6 +123,7 @@ def complete_structured(
     messages: Sequence[BaseMessage],
     *,
     schema: type[StructuredOutput],
+    model: str | None = None,
     system: str | None = None,
     run_name: str | None = None,
     metadata: dict | None = None,
@@ -136,8 +145,9 @@ def complete_structured(
     if run_name is not None:
         config["run_name"] = run_name
 
-    model = get_chat_model().with_structured_output(schema, include_raw=True)
-    result = model.invoke(payload, config=config)
+    config["metadata"]["model"] = model or LLM_MODEL
+    structured = get_chat_model(model).with_structured_output(schema, include_raw=True)
+    result = structured.invoke(payload, config=config)
     raw = result.get("raw")
     parsed = result.get("parsed")
     if isinstance(raw, AIMessage):
