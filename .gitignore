@@ -39,3 +39,8 @@ study_participants.csv
 
 # plaintext participant codes
 *_participants.csv
+
+CLOSING_README.md
+PUNCHLIST.md
+*.patch
+sql/
