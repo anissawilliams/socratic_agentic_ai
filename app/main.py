@@ -21,8 +21,8 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-       "http://localhost:5173",
-       "https://socraticai-production.up.railway.app"
+        "http://localhost:5173",
+        "https://learningstudy-production.up.railway.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
