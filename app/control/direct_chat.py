@@ -37,11 +37,15 @@ speakers. Keep responses reasonably concise.
 DIRECT_CHAT_PROMPT_SHA256 = sha256(DIRECT_CHAT_PROMPT.encode("utf-8")).hexdigest()
 
 
-def opening_message(scenario_title: str) -> str:
-    return (
-        f'I\'m here to help you work through the "{scenario_title}" scenario '
-        "from the first part. What would you like to ask?"
-    )
+# Wording approved by the research team.
+CONTROL_OPENING = (
+    "I'm here to help you work through the scenario you just considered. "
+    "How can I help you?"
+)
+
+
+def opening_message(scenario_title: str) -> str:  # noqa: ARG001 (kept for callers)
+    return CONTROL_OPENING
 
 
 def respond(messages: list[BaseMessage]) -> AIMessage:

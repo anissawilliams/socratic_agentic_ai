@@ -2,7 +2,9 @@
 
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+MIN_ANSWER_WORDS = 5
 
 
 class AssessmentStage(str, Enum):
@@ -33,6 +35,17 @@ class AssessmentContentResponse(BaseModel):
 class AssessmentAnswer(BaseModel):
     question_id: str
     value: str = Field(min_length=1)
+
+    @field_validator("value")
+    @classmethod
+    def _minimum_words(cls, value: str) -> str:
+        # Normal submissions need at least five words per answer. Timeout
+        # submissions use a separate schema and save whatever was written.
+        if len(value.split()) < MIN_ANSWER_WORDS:
+            raise ValueError(
+                f"Please write at least {MIN_ANSWER_WORDS} words for each answer."
+            )
+        return value
 
 
 class AssessmentSubmission(BaseModel):

@@ -25,7 +25,7 @@ SURVEY_PATH = (
     Path(__file__).resolve().parents[2] / "content" / "surveys" / "final_survey.yaml"
 )
 
-GenderCode = Literal["male", "female", "non_binary"]
+GenderCode = Literal["male", "female", "non_binary", "prefer_not_to_say"]
 
 AcademicLevelCode = Literal["undergraduate", "graduate"]
 
@@ -36,6 +36,7 @@ RaceCode = Literal[
     "hispanic_latino",
     "middle_eastern_north_african",
     "other",
+    "prefer_not_to_say",
 ]
 
 
@@ -78,7 +79,7 @@ def _survey() -> dict:
 # ------------------------------------------------------------ demographics
 
 class DemographicsSubmission(BaseModel):
-    age: int = Field(ge=18, le=99)
+    age: int | None = Field(default=None, ge=18, le=99)  # optional
     gender_code: GenderCode
     academic_level_code: AcademicLevelCode
     race_codes: list[RaceCode] = Field(min_length=1)
@@ -88,6 +89,10 @@ class DemographicsSubmission(BaseModel):
     @model_validator(mode="after")
     def _other_description_matches(self):
         self.race_codes = sorted(set(self.race_codes))
+        if "prefer_not_to_say" in self.race_codes and len(self.race_codes) > 1:
+            raise ValueError(
+                "Choose 'Prefer not to answer' on its own, or select your background."
+            )
         text = (self.race_other_description or "").strip()
         if "other" in self.race_codes and not text:
             raise ValueError("Please describe your background or unselect that option.")

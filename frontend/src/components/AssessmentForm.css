@@ -255,3 +255,8 @@
 .assessment-form__scenario p {
   white-space: pre-line;
 }
+.assessment-form__optional {
+  color: var(--text-muted, #5f7081);
+  font-weight: 400;
+  font-size: 0.9em;
+}

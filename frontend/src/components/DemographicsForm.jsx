@@ -7,6 +7,7 @@ const GENDER_OPTIONS = [
   { code: "male", label: "Male" },
   { code: "female", label: "Female" },
   { code: "non_binary", label: "Non-binary" },
+  { code: "prefer_not_to_say", label: "Prefer not to answer" },
 ];
 
 const ACADEMIC_LEVEL_OPTIONS = [
@@ -21,6 +22,7 @@ const RACE_OPTIONS = [
   { code: "hispanic_latino", label: "Hispanic / Latino" },
   { code: "middle_eastern_north_african", label: "Middle Eastern / North African" },
   { code: "other", label: "Another racial or ethnic background" },
+  { code: "prefer_not_to_say", label: "Prefer not to answer" },
 ];
 
 export default function DemographicsForm({ onSubmit }) {
@@ -33,21 +35,25 @@ export default function DemographicsForm({ onSubmit }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // "Prefer not to answer" is exclusive: choosing it clears other choices,
+  // and choosing a background clears it.
   const toggleRace = (code) => {
-    setRaceCodes((current) =>
-      current.includes(code)
-        ? current.filter((value) => value !== code)
-        : [...current, code]
-    );
+    setRaceCodes((current) => {
+      if (current.includes(code)) return current.filter((value) => value !== code);
+      if (code === "prefer_not_to_say") return ["prefer_not_to_say"];
+      return [...current.filter((value) => value !== "prefer_not_to_say"), code];
+    });
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
 
-    const ageNumber = Number(age);
-    if (!Number.isInteger(ageNumber) || ageNumber < 18 || ageNumber > 99) {
-      setError("Please enter your age as a whole number between 18 and 99.");
+    // Age is optional; validate only if something was entered.
+    const ageText = age.trim();
+    const ageNumber = ageText === "" ? null : Number(ageText);
+    if (ageNumber !== null && (!Number.isInteger(ageNumber) || ageNumber < 18 || ageNumber > 99)) {
+      setError("Please enter your age as a whole number between 18 and 99, or leave it blank.");
       return;
     }
     if (raceCodes.length === 0) {
@@ -83,7 +89,7 @@ export default function DemographicsForm({ onSubmit }) {
         </header>
 
         <label className="assessment-form__question">
-          <span>1. What is your age?</span>
+          <span>1. What is your age? <span className="assessment-form__optional">(optional)</span></span>
           <span className="assessment-form__inline">
             <input
               type="number"
@@ -93,7 +99,6 @@ export default function DemographicsForm({ onSubmit }) {
               step={1}
               value={age}
               onChange={(event) => setAge(event.target.value)}
-              required
             />
             years
           </span>

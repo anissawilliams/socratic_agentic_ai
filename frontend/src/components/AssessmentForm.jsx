@@ -5,6 +5,9 @@ import PhaseTimer from "./PhaseTimer";
 import "./AssessmentForm.css";
 
 
+// Normal submissions need at least this many words per answer.
+const MIN_ANSWER_WORDS = 5;
+
 export default function AssessmentForm({ content, onSubmit, onTimeout, onSkip }) {
   const [answers, setAnswers] = useState({});
   const answersRef = useRef({});
@@ -43,8 +46,25 @@ export default function AssessmentForm({ content, onSubmit, onTimeout, onSkip })
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setSubmitting(true);
     setError("");
+
+    const tooShort = content.questions
+      .map((question, index) => ({
+        number: index + 1,
+        words: (answers[question.id] || "").trim().split(/\s+/).filter(Boolean).length,
+      }))
+      .filter((answer) => answer.words < MIN_ANSWER_WORDS)
+      .map((answer) => answer.number);
+
+    if (tooShort.length > 0) {
+      setError(
+        `Please write at least ${MIN_ANSWER_WORDS} words for each answer ` +
+          `(check question${tooShort.length > 1 ? "s" : ""} ${tooShort.join(", ")}).`
+      );
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
       await onSubmit({

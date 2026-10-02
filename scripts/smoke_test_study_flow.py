@@ -90,7 +90,7 @@ def do_assessment(client: Client, stage: str) -> None:
             "stage": content["stage"],
             "scenario_key": content["scenario_key"],
             "answers": [
-                {"question_id": q["id"], "value": f"Smoke-test answer for {q['id']}."}
+                {"question_id": q["id"], "value": f"This is a smoke test answer for {q['id']}."}
                 for q in content["questions"]
             ],
         },
