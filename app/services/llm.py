@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from app.config import (
     LLM_MODEL,
     LLM_NO_TEMPERATURE_MODELS,
+    LLM_REASONING_EFFORT,
     LLM_TEMPERATURE,
     OPENAI_API_KEY,
 )
@@ -54,9 +55,12 @@ def collect_llm_usage():
         _usage_collector.reset(token)
 
 
-@lru_cache(maxsize=8)
-def get_chat_model(model: str | None = None) -> ChatOpenAI:
-    """Shared ChatOpenAI client per model. Agents must not construct their own."""
+@lru_cache(maxsize=16)
+def get_chat_model(
+    model: str | None = None,
+    reasoning_effort: str | None = None,
+) -> ChatOpenAI:
+    """Shared ChatOpenAI client per model/effort. Agents must not construct their own."""
     if not OPENAI_API_KEY:
         raise RuntimeError("OPENAI_API_KEY must be configured.")
 
@@ -66,7 +70,12 @@ def get_chat_model(model: str | None = None) -> ChatOpenAI:
         "api_key": OPENAI_API_KEY,
         "max_retries": 6,   # rides out brief rate-limit spikes
         "timeout": 90,
+        # Report token usage on streamed responses too, so research logging
+        # keeps input/output token counts when the tutor reply is streamed.
+        "stream_usage": True,
     }
+    if reasoning_effort:
+        settings["reasoning_effort"] = reasoning_effort
     if name not in LLM_NO_TEMPERATURE_MODELS:
         settings["temperature"] = LLM_TEMPERATURE
     return ChatOpenAI(**settings)
@@ -95,6 +104,7 @@ def complete(
     system: str | None = None,
     run_name: str | None = None,
     metadata: dict | None = None,
+    reasoning_effort: str | None = None,
 ) -> AIMessage:
     payload: list[BaseMessage] = list(messages)
 
@@ -111,8 +121,10 @@ def complete(
     if run_name is not None:
         config["run_name"] = run_name
 
+    effort = reasoning_effort or LLM_REASONING_EFFORT
     config["metadata"]["model"] = model or LLM_MODEL
-    response = get_chat_model(model).invoke(payload, config=config)
+    config["metadata"]["reasoning_effort"] = effort or "default"
+    response = get_chat_model(model, effort).invoke(payload, config=config)
     _record_usage(response)
     return response
 
@@ -127,6 +139,7 @@ def complete_structured(
     system: str | None = None,
     run_name: str | None = None,
     metadata: dict | None = None,
+    reasoning_effort: str | None = None,
 ) -> StructuredOutput:
     """Invoke the shared chat model and return structured output."""
 
@@ -145,8 +158,12 @@ def complete_structured(
     if run_name is not None:
         config["run_name"] = run_name
 
+    effort = reasoning_effort or LLM_REASONING_EFFORT
     config["metadata"]["model"] = model or LLM_MODEL
-    structured = get_chat_model(model).with_structured_output(schema, include_raw=True)
+    config["metadata"]["reasoning_effort"] = effort or "default"
+    structured = get_chat_model(model, effort).with_structured_output(
+        schema, include_raw=True
+    )
     result = structured.invoke(payload, config=config)
     raw = result.get("raw")
     parsed = result.get("parsed")

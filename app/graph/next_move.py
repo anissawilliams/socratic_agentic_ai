@@ -1,5 +1,5 @@
 import json
-from app.config import LLM_MODEL_ROUTER
+from app.config import LLM_MODEL_ROUTER, LLM_REASONING_EFFORT_ROUTER
 from collections.abc import Sequence
 
 from langchain_core.messages import BaseMessage
@@ -89,6 +89,7 @@ def _invoke_router(
         model=LLM_MODEL_ROUTER,
         system=system,
         run_name=run_name,
+        reasoning_effort=LLM_REASONING_EFFORT_ROUTER,
         metadata={
             "current_phase": current_phase.value,
             "routing_history_length": routing_history_length,

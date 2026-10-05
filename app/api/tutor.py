@@ -1,9 +1,14 @@
+import contextvars
 from copy import deepcopy
+import json
 import logging
+import queue
+import threading
 from time import perf_counter
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from langchain_core.messages import AIMessage, HumanMessage
 from pydantic import BaseModel
 
@@ -199,14 +204,28 @@ def _direct_chat_turn(state, req, participant, scenario_context, session_key):
     )
 
 
-@router.post(
-    "/tutor/message",
-    response_model=TutorMessageResponse,
-)
-def send_message(
+class _PreparedTurn:
+    """Everything a Socratic turn needs after validation, shared by the
+    blocking and streaming endpoints."""
+
+    def __init__(self, *, state, session_key, turn_id, messages_before, phase_before):
+        self.state = state
+        self.session_key = session_key
+        self.turn_id = turn_id
+        self.messages_before = messages_before
+        self.phase_before = phase_before
+
+
+def _prepare_turn(
     req: TutorMessageRequest,
-    participant: dict = Depends(require_participant),
-):
+    participant: dict,
+) -> _PreparedTurn | TutorMessageResponse:
+    """Validate the request and build the turn state.
+
+    Returns a finished TutorMessageResponse for the control condition
+    (which has no Socratic graph), otherwise a _PreparedTurn whose turn has
+    been started in the database.
+    """
     if tutor_time_is_up(str(req.session_id)):
         raise HTTPException(status_code=409, detail="time_up")
 
@@ -265,8 +284,6 @@ def send_message(
         scenario_context,
     )
 
-    messages_before = len(state["messages"])
-
     phase_before = state["current_phase"]
     if phase_before is None:
         raise HTTPException(
@@ -275,14 +292,26 @@ def send_message(
         )
 
     start_turn(state, phase_before=phase_before)
+
+    return _PreparedTurn(
+        state=state,
+        session_key=session_key,
+        turn_id=turn_id,
+        messages_before=len(state["messages"]),
+        phase_before=phase_before,
+    )
+
+
+def _run_turn(turn: _PreparedTurn, run_graph) -> TutorMessageResponse:
+    """Run the graph via run_graph(state) -> final state, persist, respond."""
+    started = perf_counter()
     try:
-        started = perf_counter()
         with collect_llm_usage() as usage:
-            result = tutor_graph.invoke(state)
+            result = run_graph(turn.state)
         latency_ms = round((perf_counter() - started) * 1000)
         save_turn(
             result,
-            phase_before=phase_before,
+            phase_before=turn.phase_before,
             latency_ms=latency_ms,
             input_tokens=usage.input_tokens,
             output_tokens=usage.output_tokens,
@@ -290,27 +319,30 @@ def send_message(
     except Exception as exc:
         try:
             fail_turn(
-                state,
+                turn.state,
                 exc,
                 latency_ms=round((perf_counter() - started) * 1000),
                 input_tokens=usage.input_tokens,
                 output_tokens=usage.output_tokens,
             )
         except Exception:
-            logger.exception("Failed to persist terminal failure for tutor turn %s", turn_key)
+            logger.exception(
+                "Failed to persist terminal failure for tutor turn %s",
+                turn.turn_id,
+            )
         raise
 
     # Return only messages generated during this graph invocation.
-    generated = result["messages"][messages_before:]
+    generated = result["messages"][turn.messages_before:]
     result["messages"] = without_scenario_context(result["messages"])
-    _sessions[session_key] = result
+    _sessions[turn.session_key] = result
     tutor_message = generated[-1].text if generated else ""
 
     current_phase = result["current_phase"]
 
     return TutorMessageResponse(
-        session_id=req.session_id,
-        current_turn_id=turn_id,
+        session_id=UUID(turn.session_key),
+        current_turn_id=turn.turn_id,
         message=tutor_message,
         current_phase=(
             current_phase.value
@@ -319,6 +351,110 @@ def send_message(
         ),
         is_complete=result["is_complete"],
     )
+
+
+@router.post(
+    "/tutor/message",
+    response_model=TutorMessageResponse,
+)
+def send_message(
+    req: TutorMessageRequest,
+    participant: dict = Depends(require_participant),
+):
+    turn = _prepare_turn(req, participant)
+    if isinstance(turn, TutorMessageResponse):
+        return turn
+    return _run_turn(turn, tutor_graph.invoke)
+
+
+# Nodes whose model tokens are the student-facing tutor reply. Evaluator and
+# router tokens (structured JSON) are never streamed to the student.
+_STREAMED_NODES = {"generate_response"}
+
+
+def _sse(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+@router.post("/tutor/message/stream")
+def send_message_stream(
+    req: TutorMessageRequest,
+    participant: dict = Depends(require_participant),
+):
+    """Same turn as /tutor/message, delivered as server-sent events.
+
+    Events:
+      token  {"text": "..."}         a piece of the tutor reply as it is generated
+      done   TutorMessageResponse    the final, persisted turn (authoritative text)
+      error  {"detail": "..."}       the turn failed; it was recorded as failed
+
+    Persistence, latency, and token accounting are identical to the blocking
+    endpoint: the graph runs in a worker thread through _run_turn.
+    """
+    # Validation errors (404/409/403) are raised here, before streaming
+    # begins, so the client receives a normal HTTP error status.
+    turn = _prepare_turn(req, participant)
+
+    events: queue.Queue = queue.Queue()
+    _END = object()
+
+    def stream_graph(state):
+        final_state = None
+        for mode, chunk in tutor_graph.stream(
+            state,
+            stream_mode=["messages", "values"],
+        ):
+            if mode == "values":
+                final_state = chunk
+                continue
+            message, metadata = chunk
+            if metadata.get("langgraph_node") not in _STREAMED_NODES:
+                continue
+            text = message.content if isinstance(message.content, str) else ""
+            if text:
+                events.put(("token", {"text": text}))
+        if final_state is None:
+            raise RuntimeError("Tutor graph produced no final state.")
+        return final_state
+
+    def worker():
+        try:
+            if isinstance(turn, TutorMessageResponse):
+                response = turn
+            else:
+                response = _run_turn(turn, stream_graph)
+            events.put(("done", response.model_dump(mode="json")))
+        except Exception:
+            logger.exception("Streaming tutor turn failed")
+            events.put((
+                "error",
+                {"detail": "The tutor hit an error while generating a reply."},
+            ))
+        finally:
+            events.put(_END)
+
+    # copy_context keeps request-scoped context (e.g. tracing) in the worker.
+    ctx = contextvars.copy_context()
+    threading.Thread(target=ctx.run, args=(worker,), daemon=True).start()
+
+    def body():
+        while True:
+            item = events.get()
+            if item is _END:
+                return
+            event, data = item
+            yield _sse(event, data)
+
+    return StreamingResponse(
+        body(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            # Stop proxies (Railway/nginx) from buffering the stream.
+            "X-Accel-Buffering": "no",
+        },
+    )
+
 
 class TutorScenarioResponse(BaseModel):
     title: str

@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from langchain_core.messages import BaseMessage, HumanMessage
 
 from app.graph.evaluate.criteria import PHASE_EVALUATION_CRITERIA
-from app.config import LLM_MODEL_EVALUATOR
+from app.config import LLM_MODEL_EVALUATOR, LLM_REASONING_EFFORT_EVALUATOR
 from app.models.evaluation import ResponseEvaluation
 from app.services.llm import complete_structured
 from app.socratic.phases import SocraticPhase
@@ -40,6 +40,7 @@ def evaluate_response(
         model=model or LLM_MODEL_EVALUATOR,
         system=EVALUATOR_PROMPT,
         run_name="evaluate_response",
+        reasoning_effort=LLM_REASONING_EFFORT_EVALUATOR,
         metadata={
             "current_phase": current_phase,
         },

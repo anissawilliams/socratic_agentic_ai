@@ -13,6 +13,13 @@ LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 # are behind-the-scenes judges and may use a different model.
 LLM_MODEL_EVALUATOR = os.getenv("LLM_MODEL_EVALUATOR") or LLM_MODEL
 LLM_MODEL_ROUTER = os.getenv("LLM_MODEL_ROUTER") or LLM_MODEL
+# Optional reasoning effort per role, for reasoning models only
+# ("minimal", "low", "medium", "high"). Empty = provider default.
+# The evaluator and router are classification-style judges and are the
+# biggest share of turn latency; "low" is usually enough for them.
+LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT") or None
+LLM_REASONING_EFFORT_EVALUATOR = os.getenv("LLM_REASONING_EFFORT_EVALUATOR") or None
+LLM_REASONING_EFFORT_ROUTER = os.getenv("LLM_REASONING_EFFORT_ROUTER") or None
 # Comma-separated models that reject a temperature setting (some reasoning
 # models). Leave empty unless a model errors on temperature.
 LLM_NO_TEMPERATURE_MODELS = {

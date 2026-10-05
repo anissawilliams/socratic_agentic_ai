@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import {
   startSession as apiStartSession,
   sendMessage as apiSendMessage,
+  streamMessage as apiStreamMessage,
+  STREAMING_ENABLED,
 } from "../api/chatClient";
 
 import {
@@ -185,11 +187,42 @@ export function useChatSession() {
 
     setIsWaiting(true);
 
+    // While streaming, the tutor bubble is created on the first token and
+    // grows in place; the saved reply from the "done" event replaces it.
+    let streamedStarted = false;
+    const onToken = (piece) => {
+      if (!streamedStarted) {
+        streamedStarted = true;
+        setIsWaiting(false);
+        setMessages((prev) => [
+          ...prev,
+          { role: "tutor", content: piece, streaming: true },
+        ]);
+        return;
+      }
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        return [
+          ...prev.slice(0, -1),
+          { ...last, content: last.content + piece },
+        ];
+      });
+    };
+
+    const dropPartialReply = () => {
+      if (streamedStarted) {
+        setMessages((prev) =>
+          prev[prev.length - 1]?.streaming ? prev.slice(0, -1) : prev
+        );
+      }
+    };
+
     try {
-      const data = await apiSendMessage(
-        sessionId,
-        text
-      );
+      const data = STREAMING_ENABLED
+        ? await apiStreamMessage(sessionId, text, { onToken })
+        : await apiSendMessage(sessionId, text);
+
+      dropPartialReply();
 
       if (data.message) {
         setMessages((prev) => [
@@ -208,6 +241,7 @@ export function useChatSession() {
       setIsComplete(data.is_complete);
     } catch (err) {
       logFailure("Sending a message", err);
+      dropPartialReply();
       if (recoverFromAuthFailure(err)) {
         return;
       }
