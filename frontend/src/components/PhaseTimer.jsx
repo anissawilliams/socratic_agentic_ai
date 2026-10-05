@@ -20,7 +20,7 @@ function format(ms) {
  * onMinReached fires once when the student is allowed to move on.
  * onExpire fires once when time runs out.
  */
-export default function PhaseTimer({ onExpire, onMinReached }) {
+export default function PhaseTimer({ onExpire, onMinReached, showContinueNote = true }) {
   const [timer, setTimer] = useState(null);
   const [now, setNow] = useState(() => Date.now());
   const offsetRef = useRef(0);
@@ -98,7 +98,7 @@ export default function PhaseTimer({ onExpire, onMinReached }) {
 
   return (
     <div className="phase-timer-wrap">
-      {canContinue && remaining > 0 && (
+      {showContinueNote && canContinue && remaining > 0 && (
         <span className="phase-timer__note">You may continue to the next step.</span>
       )}
       <div

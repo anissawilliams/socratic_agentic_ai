@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
 
-export default function ChatWindow({ messages, isWaiting }) {
+export default function ChatWindow({ messages, isWaiting, before = null }) {
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -10,6 +10,8 @@ export default function ChatWindow({ messages, isWaiting }) {
 
   return (
     <div className="chat-window">
+      {before}
+
       {messages.map((msg, i) => (
         <MessageBubble
           key={i}

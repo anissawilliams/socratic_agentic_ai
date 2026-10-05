@@ -58,6 +58,7 @@ function TutorApp({ onCompleted }) {
       setTransitionError("Time is up, but the next part could not be loaded.");
     });
   };
+
   useEffect(() => {
     if (hasStarted.current) {
       return;
@@ -79,67 +80,61 @@ function TutorApp({ onCompleted }) {
     });
   }, [isComplete, onCompleted]);
 
+  const retryTransition = () => {
+    setTransitionError("");
+    onCompleted().catch((error) => {
+      console.error("Unable to load post-test:", error);
+      setTransitionError("The post-test could not be loaded. Please try again.");
+    });
+  };
+
   return (
     <div className="app-shell">
-      <header className="app-header">
+      {/* Compact top bar: stays fixed while the conversation scrolls. */}
+      <header className="app-header app-header--compact">
         <div className="tutor-brand">
-          <img
-            src={aiStudyAvatar}
-            alt=""
-            className="tutor-brand__avatar"
-          />
-
-          <div className="tutor-brand__text">
-            <h1 className="tutor-brand__name">Learning Study</h1>
-            <span className="tutor-brand__status">
-              Ready
-            </span>
-          </div>
+          <img src={aiStudyAvatar} alt="" className="tutor-brand__avatar" />
+          <h1 className="tutor-brand__name">Learning Study</h1>
         </div>
 
-        <div className="header-links">
+        <div className="tutor-controls">
+          {!isComplete && (
+            <>
+              <PhaseTimer
+                onExpire={handleTimeUp}
+                onMinReached={() => setCanContinue(true)}
+                showContinueNote={false}
+              />
+              <div className="tutor-continue-wrap">
+                <button
+                  type="button"
+                  className="tutor-continue"
+                  onClick={handleContinue}
+                  disabled={!canContinue || continuing || isWaiting || timeUp}
+                >
+                  {continuing ? "Moving on..." : "Continue to next step"}
+                </button>
+                {!canContinue && (
+                  <span className="tutor-continue-note">Enabled near end of timer</span>
+                )}
+              </div>
+            </>
+          )}
           <SignOutLink variant="inline" />
         </div>
-
       </header>
 
-      {!isComplete && (
-        <div className="tutor-timer">
-          <PhaseTimer
-            onExpire={handleTimeUp}
-            onMinReached={() => setCanContinue(true)}
-          />
-          {canContinue && !timeUp && (
-            <button
-              type="button"
-              className="tutor-continue"
-              onClick={handleContinue}
-              disabled={continuing || isWaiting}
-            >
-              {continuing ? "Moving on..." : "Continue to next step"}
-            </button>
-          )}
-        </div>
-      )}
-      <ScenarioPanel />
       {timeUp && !isComplete && (
         <p className="tutor-time-up">Time is up. Moving on to the next part...</p>
       )}
 
-      <ChatWindow messages={messages}
-      isWaiting={isWaiting}
-      />
+      {/* One scrolling area: the scenario first, then the conversation. */}
+      <ChatWindow messages={messages} isWaiting={isWaiting} before={<ScenarioPanel />} />
 
       {transitionError && (
-        <div role="alert">
+        <div role="alert" className="tutor-transition-error">
           <p>{transitionError}</p>
-          <button type="button" onClick={() => {
-            setTransitionError("");
-            onCompleted().catch((error) => {
-              console.error("Unable to load post-test:", error);
-              setTransitionError("The post-test could not be loaded. Please try again.");
-            });
-          }}>
+          <button type="button" onClick={retryTransition}>
             Continue to post-test
           </button>
         </div>

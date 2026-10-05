@@ -24,13 +24,12 @@ body {
 }
 
 .app-shell {
-  width: min(760px, calc(100% - 32px));
+  width: min(1040px, calc(100% - 48px));
   height: calc(100vh - 32px);
-  margin: 16px auto;   /* "auto" is what centers it */
+  margin: 16px auto; /* "auto" is what centers it */
 
   display: flex;
   flex-direction: column;
-
   overflow: hidden;
 
   font-family:
@@ -42,64 +41,102 @@ body {
     sans-serif;
 
   background: var(--surface);
-
-  border: 1px solid var(--border);
-  border-radius: 22px;
-
+  border: 1px solid #c9dbe7;
   box-shadow:
-    0 18px 50px rgba(20, 57, 91, 0.10),
-    0 3px 12px rgba(20, 57, 91, 0.05);
+  0 18px 50px rgba(20, 57, 91, 0.14),
+  0 3px 12px rgba(20, 57, 91, 0.08);
+  border-radius: 22px;
 }
 
-/* ---------- Header ---------- */
-
+/* ---------- Top bar (compact; stays fixed while the chat scrolls) ---------- */
+.app-shell .app-header {
+  background: linear-gradient(135deg, #e7f6fd 0%, #cfeafb 100%);
+}
 .app-header {
+  flex-shrink: 0;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
 
-  min-height: 72px;
-  padding: 12px 18px;
+  padding: 8px 14px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #e7f6fd 0%,
-      #cfeafb 100%
-    );
-
+  background: linear-gradient(135deg, #e7f6fd 0%, #cfeafb 100%);
   border-bottom: 1px solid var(--border);
 }
 
-.app-header button {
-  padding: 9px 14px;
+.app-header .tutor-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-  border: 1px solid rgba(20, 57, 91, 0.14);
+.app-header .tutor-brand__avatar {
+  width: 28px;
+  height: 28px;
+}
+
+.app-header .tutor-brand__name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  color: #14395b;
+}
+
+.tutor-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.tutor-controls .phase-timer {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+
+/* Continue button: always visible, enabled after the minimum time */
+
+.tutor-continue-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tutor-continue {
+  padding: 5px 12px;
+
+  border: 1px solid var(--blue-dark);
   border-radius: 999px;
 
-  background: rgba(255, 255, 255, 0.78);
-  color: #14395b;
+  background: var(--blue-dark);
+  color: #fff;
 
   font: inherit;
-  font-size: 0.86rem;
-  font-weight: 650;
+  font-size: 0.8rem;
+  font-weight: 600;
 
   cursor: pointer;
-
-  transition:
-    background 140ms ease,
-    box-shadow 140ms ease,
-    transform 140ms ease;
+  transition: background 140ms ease;
 }
 
-.app-header button:hover {
-  background: #ffffff;
-
-  box-shadow:
-    0 3px 10px rgba(20, 57, 91, 0.10);
-
-  transform: translateY(-1px);
+.tutor-continue:hover:not(:disabled) {
+  background: #2c5e8c;
 }
+
+.tutor-continue:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tutor-continue-note {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* Sign out link */
 
 .header-links {
   display: flex;
@@ -107,25 +144,21 @@ body {
   gap: 16px;
 }
 
-.app-header .header-link {
+.header-link {
   padding: 0;
   border: none;
   background: none;
-  box-shadow: none;
   color: #14395b;
+  font: inherit;
   font-size: 0.85rem;
   font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
-  transform: none;
 }
 
-.app-header .header-link:hover {
-  background: none;
-  box-shadow: none;
+.header-link:hover {
   color: var(--blue-dark);
-  transform: none;
 }
 
 /* The tutor header has its own sign-out link, so hide the floating one there. */
@@ -133,40 +166,32 @@ body:has(.app-shell) .sign-out-link {
   display: none;
 }
 
+/* ---------- Status messages ---------- */
 
-/* ---------- Phase indicator ---------- */
-
-.phase-indicator {
-  align-self: center;
-
-  margin-top: 10px;
-  padding: 5px 11px;
-
+.tutor-time-up {
+  flex-shrink: 0;
+  margin: 8px 18px 0;
+  padding: 10px 14px;
+  border-radius: 10px;
   background: var(--blue-soft);
-  color: #5c7890;
-
-  border: 1px solid #d8ebf5;
-  border-radius: 999px;
-
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  text-align: center;
 }
 
-/* ---------- Chat area ---------- */
+.tutor-transition-error {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  text-align: center;
+}
+
+/* ---------- Chat area (one scrolling section: scenario, then messages) ---------- */
 
 .chat-window {
   flex: 1;
-
   overflow-y: auto;
-
-  padding: 22px 20px 18px;
-
+  padding: 18px 20px;
   scroll-behavior: smooth;
 }
 
-/* gives the scrollbar a little polish */
 .chat-window::-webkit-scrollbar {
   width: 8px;
 }
@@ -176,12 +201,48 @@ body:has(.app-shell) .sign-out-link {
   border-radius: 999px;
 }
 
+/* ---------- Scenario panel (first item in the chat area) ---------- */
+
+.scenario-panel {
+  margin: 0 0 16px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--blue);
+  border-radius: 10px;
+  background: var(--blue-soft);
+}
+
+.scenario-panel summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.scenario-panel__label {
+  color: var(--blue-dark);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.scenario-panel__title {
+  font-weight: 600;
+}
+
+.scenario-panel__text {
+  padding: 0 14px 12px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
 /* ---------- Message rows ---------- */
 
 .bubble-row {
   display: flex;
   align-items: flex-end;
-
   margin-bottom: 14px;
 }
 
@@ -196,45 +257,30 @@ body:has(.app-shell) .sign-out-link {
 /* ---------- Message bubbles ---------- */
 
 .bubble {
-  max-width: min(76%, 620px);
-
+  max-width: min(78%, 800px);
   padding: 11px 14px;
-
   border-radius: 18px;
-
   line-height: 1.48;
   font-size: 0.95rem;
-
   overflow-wrap: anywhere;
 }
 
 .bubble-student {
-  background:
-    linear-gradient(
-      135deg,
-      #5a96c8,
-      #477fb4
-    );
-
+  background: linear-gradient(135deg, #5a96c8, #477fb4);
   color: white;
-
   border-bottom-right-radius: 6px;
-
-  box-shadow:
-    0 3px 10px rgba(74, 125, 189, 0.18);
+  box-shadow: 0 3px 10px rgba(74, 125, 189, 0.18);
 }
 
 .bubble-tutor {
   background: #f4f7f9;
-
   color: var(--text);
-
   border: 1px solid #e7edf1;
   border-bottom-left-radius: 6px;
-
-  box-shadow:
-    0 2px 7px rgba(20, 57, 91, 0.05);
+  box-shadow: 0 2px 7px rgba(20, 57, 91, 0.05);
 }
+
+/* Markdown inside AI replies (control condition) */
 
 .bubble-tutor p {
   margin: 0 0 8px;
@@ -263,41 +309,32 @@ body:has(.app-shell) .sign-out-link {
 .bubble-tutor li {
   margin: 2px 0;
 }
+
 /* ---------- Input area ---------- */
 
 .chat-input-row {
+  flex-shrink: 0;
   display: flex;
   align-items: flex-end;
   gap: 10px;
-
   padding: 14px 16px 16px;
-
   background: rgba(255, 255, 255, 0.96);
-
   border-top: 1px solid var(--border);
 }
 
 .chat-input-row textarea {
   flex: 1;
-
   min-height: 44px;
   max-height: 120px;
-
   resize: none;
-
   padding: 11px 13px;
-
   border: 1px solid #d7e2ea;
   border-radius: 15px;
-
   outline: none;
-
   background: #fbfdfe;
   color: var(--text);
-
   font: inherit;
   line-height: 1.4;
-
   transition:
     border-color 140ms ease,
     box-shadow 140ms ease,
@@ -310,33 +347,22 @@ body:has(.app-shell) .sign-out-link {
 
 .chat-input-row textarea:focus {
   background: white;
-
   border-color: #86bcdc;
-
-  box-shadow:
-    0 0 0 3px rgba(121, 191, 232, 0.16);
+  box-shadow: 0 0 0 3px rgba(121, 191, 232, 0.16);
 }
 
 .chat-input-row button {
   min-width: 72px;
   height: 44px;
-
   padding: 0 16px;
-
   border: none;
   border-radius: 14px;
-
   background: var(--blue);
   color: white;
-
   font: inherit;
   font-weight: 700;
-
   cursor: pointer;
-
-  box-shadow:
-    0 3px 10px rgba(74, 125, 189, 0.20);
-
+  box-shadow: 0 3px 10px rgba(74, 125, 189, 0.20);
   transition:
     background 140ms ease,
     transform 140ms ease,
@@ -345,11 +371,8 @@ body:has(.app-shell) .sign-out-link {
 
 .chat-input-row button:hover:not(:disabled) {
   background: var(--blue-dark);
-
   transform: translateY(-1px);
-
-  box-shadow:
-    0 5px 14px rgba(74, 125, 189, 0.24);
+  box-shadow: 0 5px 14px rgba(74, 125, 189, 0.24);
 }
 
 .chat-input-row button:disabled {
@@ -364,20 +387,13 @@ body:has(.app-shell) .sign-out-link {
   .app-shell {
     width: 100%;
     height: 100vh;
-
     margin: 0;
-
-
     border: none;
     border-radius: 0;
   }
 
-  .app-header {
-    padding: 10px 14px;
-  }
-
   .chat-window {
-    padding: 18px 14px 14px;
+    padding: 16px 14px 14px;
   }
 
   .bubble {
@@ -387,78 +403,8 @@ body:has(.app-shell) .sign-out-link {
   .chat-input-row {
     padding: 12px;
   }
-}
-/* ---------- Timer + continue (tutor) ---------- */
 
-.tutor-timer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 10px 0 0;
-}
-
-.tutor-continue {
-  padding: 7px 14px;
-  border: 1px solid var(--blue-dark, #356fa3);
-  border-radius: 999px;
-  background: var(--blue-dark, #356fa3);
-  color: #fff;
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.tutor-continue:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.tutor-time-up {
-  margin: 8px 18px 0;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: var(--blue-soft, #edf7fc);
-  text-align: center;
-}
-
-/* ---------- Scenario panel ---------- */
-
-.scenario-panel {
-  margin: 10px 18px 0;
-  border: 1px solid var(--border, #dce8f0);
-  border-left: 4px solid var(--blue, #4f8fc5);
-  border-radius: 10px;
-  background: var(--blue-soft, #edf7fc);
-}
-
-.scenario-panel summary {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-}
-
-.scenario-panel__label {
-  color: var(--blue-dark, #356fa3);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.scenario-panel__title {
-  font-weight: 600;
-}
-
-.scenario-panel__text {
-  max-height: 30vh;
-  overflow-y: auto;
-  padding: 0 14px 12px;
-  font-size: 0.92rem;
-  line-height: 1.55;
-  white-space: pre-line;
+  .tutor-continue-note {
+    display: none;
+  }
 }
