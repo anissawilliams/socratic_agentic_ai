@@ -65,7 +65,10 @@ def create_participant(
 ) -> dict:
     supabase = get_supabase_client()
 
-    participant_code = participant_code or generate_study_code()
+    # Real participants get STUDY- codes so they never look like test codes.
+    participant_code = participant_code or generate_study_code(
+        "TEST" if is_test else "STUDY"
+    )
     access_code_hash = hash_study_code(participant_code)
     email = make_test_email(index)
 
