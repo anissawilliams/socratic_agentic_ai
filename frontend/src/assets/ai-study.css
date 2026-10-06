@@ -88,7 +88,7 @@
 }
 
 .chat-message--assistant .message-bubble {
-  max-width: min(76%, 680px);
+  max-width: min(82%, 820px);
   padding: 12px 15px;
   color: var(--socratic-ink);
   background: #f5f8fa;
