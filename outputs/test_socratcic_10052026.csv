@@ -1,6 +1,0 @@
-participant_code,participant_id,study_subject_id,study_participation_id,round_number,condition,email
-TEST-QAZS-L95Q,d8b2aa7f-b035-4b8b-93f3-c6af9a5db78f,0792ac2f-9d5d-4253-b946-3fb7f833610d,5a2b7142-16b6-4a20-84bc-dfec7526015d,1,scenario_questioning,test-20261005215846370964-1@study.local
-TEST-J2BC-8KVT,3244632f-8816-43f9-a792-3f4d0b390e12,13cb1db2-af8d-4682-a38e-ddb87fac94a9,bc66da03-a5a4-4d85-a8a9-da93ffae36b2,1,scenario_questioning,test-20261005215847719136-2@study.local
-TEST-49P8-3MVN,9b5e20d5-7b30-4f10-ad5c-dba71de9766e,670b7262-d9c6-4326-a71d-bd9b245bfe90,b9a7996f-ad33-472f-afbc-e8b347f902a1,1,scenario_questioning,test-20261005215847969445-3@study.local
-TEST-Y6SB-V92S,1be8656c-2826-44ad-b7c8-ff3029959eba,8b3b28cd-22ad-4b27-a2ce-7eaf2709ee00,daed3d53-c7ce-4f71-a9e9-0c140423ead2,1,scenario_questioning,test-20261005215848236668-4@study.local
-TEST-MYQY-ES84,c80efe2a-0542-4a61-9bd0-2093c6ddaf94,759e39c2-5beb-4049-ab8f-44ae811d24ca,b1833aa9-3b27-4169-b009-bd6a72f51a04,1,scenario_questioning,test-20261005215848482751-5@study.local
