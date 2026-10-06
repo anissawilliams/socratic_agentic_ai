@@ -1,10 +1,10 @@
 # Round 1 near-transfer instrument (finalized scenarios, Version 2).
 # Pretest: Targeting Energy Assistance. Posttest: Planning Cooling Centers
-# During Extreme Heat (replaced Reducing City Traffic in 1.1.0; the instrument
-# key is unchanged so provisioning and scripts keep working).
+# During Extreme Heat (replaced Reducing City Traffic in 1.1.0, when the
+# instrument key was renamed from round1_energy_traffic).
 # Bump `version` (and the scenario_version that changed) on ANY text edit.
 
-key: round1_energy_traffic
+key: round1_energy_cooling
 version: 1.1.0
 status: active
 transfer_type: near

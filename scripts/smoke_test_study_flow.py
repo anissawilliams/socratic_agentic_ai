@@ -209,7 +209,7 @@ def main() -> None:
     parser.add_argument("--base-url", default=os.getenv("SMOKE_BASE_URL", "http://localhost:8000"))
     parser.add_argument("--condition", default="scenario_questioning",
                         help="scenario_questioning (Socratic) or direct_chat (control)")
-    parser.add_argument("--instrument", default="round1_energy_traffic")
+    parser.add_argument("--instrument", default="round1_energy_cooling")
     parser.add_argument("--pretest-scenario", default="energy_assistance")
     parser.add_argument("--tutor-scenario", default="energy_assistance")
     parser.add_argument("--posttest-scenario", default="cooling_centers")
