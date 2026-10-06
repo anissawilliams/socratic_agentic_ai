@@ -44,3 +44,11 @@ CLOSING_README.md
 PUNCHLIST.md
 *.patch
 sql/
+
+# Participant codes and study outputs: never commit (the repo is public).
+outputs/
+*_codes.csv
+*codes*.csv
+*assignment_key*.csv
+*mailing*.csv
+rosters/
