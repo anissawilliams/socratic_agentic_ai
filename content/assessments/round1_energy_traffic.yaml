@@ -1,9 +1,11 @@
 # Round 1 near-transfer instrument (finalized scenarios, Version 2).
-# Pretest: Targeting Energy Assistance. Posttest: Reducing City Traffic.
+# Pretest: Targeting Energy Assistance. Posttest: Planning Cooling Centers
+# During Extreme Heat (replaced Reducing City Traffic in 1.1.0; the instrument
+# key is unchanged so provisioning and scripts keep working).
 # Bump `version` (and the scenario_version that changed) on ANY text edit.
 
 key: round1_energy_traffic
-version: 1.0.0
+version: 1.1.0
 status: active
 transfer_type: near
 cohort: round1
@@ -45,29 +47,26 @@ pretest:
       prompt: What uncertainty or new information could change your decision?
 
 posttest:
-  scenario_key: city_traffic
+  scenario_key: cooling_centers
   scenario_version: 1.0.0
-  scenario_title: Reducing City Traffic
+  scenario_title: Planning Cooling Centers During Extreme Heat
   scenario_text: |-
-    A fictional city of 600,000 residents is trying to reduce traffic congestion and air pollution in its city center. About 100,000 cars enter the city center on a typical weekday.
+    A city of 500,000 residents across 20 neighborhoods is preparing for increasingly severe summer heatwaves. Its budget allows it to operate five cooling centers during periods of extreme heat.
 
-    The city is considering two major policies:
+    The city has developed a data-driven risk model to help decide where the centers should be located. The model uses neighborhood temperature, age of residents, housing conditions, and past heat-related emergency visits.
 
-    Option A: Congestion charge
-    • Drivers would pay €8 to enter the city center on weekdays.
-    • A six-month pilot study estimates that car traffic could decrease by about 18%.
-    • The policy would generate revenue that could be used for transportation improvements.
-    • However, some lower-income workers rely on cars because public transportation is limited in the areas where they live.
+    Based on current data:
 
-    Option B: Public transportation subsidy
-    • Bus and metro fares would be reduced by 40%.
-    • A six-month pilot study estimates that car traffic could decrease by about 10%.
-    • The policy would make transportation more affordable, particularly for lower-income residents.
-    • However, it would require substantial ongoing public funding.
+    • Seven neighborhoods are predicted to face particularly high heat-related risk next summer.
+    • Five of those seven were also among the neighborhoods with the highest rates of heat-related emergency visits last summer.
+    • However, two neighborhoods that experienced high emergency rates last summer are not classified as high risk for next summer.
+    • Several high-risk neighborhoods have larger populations of older and lower-income residents.
+    • Some of these neighborhoods also have limited public transportation, which could make reaching a cooling center difficult.
+    • Officials are concerned that relying on past emergency visits may not fully represent vulnerability because some residents may be less likely or able to seek medical care.
 
-    The city currently has enough funding to fully implement only one of the two policies. Because the estimates come from short pilot studies, their long-term effects are uncertain.
+    The city must decide how to use the model and other available information to choose the five neighborhoods that should receive cooling centers.
 
-    Task: Recommend which policy the city should adopt, or propose a realistic modification of one of the policies.
+    Task: Based only on the information above, recommend how the city should make its decision.
   questions:
     - id: post_q1
       construct: recommendation
