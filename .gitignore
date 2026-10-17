@@ -44,3 +44,8 @@ CLOSING_README.md
 PUNCHLIST.md
 *.patch
 sql/
+
+rosters/
+evaluator_comparison/
+llm_call_latency.csv
+outputs/
