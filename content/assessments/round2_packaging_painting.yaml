@@ -1,0 +1,90 @@
+# Round 2 far-transfer instrument (finalized scenarios).
+# Pretest: Reducing Packaging Waste. Posttest: Preserving a Historical Painting.
+# Bump `version` (and the scenario_version that changed) on ANY text edit.
+
+key: round2_packaging_painting
+version: 1.0.0
+status: active
+transfer_type: far
+cohort: round2
+
+# Both AI conditions discuss the pretest scenario. The tutor must never
+# receive the learner's pretest answers.
+tutor_scenario_key: packaging_waste
+
+pretest:
+  scenario_key: packaging_waste
+  scenario_version: 1.0.0
+  scenario_title: Reducing Packaging Waste at a Retail Company
+  scenario_text: |-
+    A retail company ships approximately 20,000 products to customers each month. The company wants to reduce packaging waste over the next year while maintaining reliable deliveries and controlling costs. It has a budget of $500,000 to make changes to its packaging system.
+
+    The company is considering two approaches.
+
+    Option A: Recyclable Packaging
+    • Would cost approximately $330,000 during the first year.
+    • Could reduce packaging waste by an estimated 25%-35% compared with the current system.
+    • Would require little change in customer behavior.
+    • Its environmental benefits depend partly on whether customers have access to recycling facilities, which varies across locations.
+
+    Option B: Reusable Packaging
+    • Would cost approximately $470,000 during the first year, including setting up a return and cleaning system.
+    • Could reduce single-use packaging waste by approximately 45%-55% if containers are reused at least four times.
+    • In a trial involving 1,000 shipments, only 650 containers were returned after their first use.
+    • Return rates varied across locations, and the environmental impacts of cleaning and transporting returned containers have not been fully evaluated.
+
+    The company must decide whether to adopt one of these approaches, test them further, or combine elements of both within its available budget.
+
+    Task: Based only on the information above, recommend what the company should do.
+  questions:
+    - id: pre_q1
+      construct: recommendation
+      prompt: What do you recommend?
+    - id: pre_q2
+      construct: evidence_reasoning
+      prompt: What information or evidence is most important in reaching your recommendation, and why?
+    - id: pre_q3
+      construct: counterargument
+      prompt: What is the strongest concern or argument against your recommendation?
+    - id: pre_q4
+      construct: uncertainty_revision
+      prompt: What uncertainty or new information could change your decision?
+
+posttest:
+  scenario_key: historical_painting
+  scenario_version: 1.0.0
+  scenario_title: Preserving a Historical Painting
+  scenario_text: |-
+    A museum owns a 150-year-old painting that is considered an important part of its collection. Over time, exposure to light can cause the painting's colors to fade permanently. The museum wants to make the painting accessible to the public while protecting it for future generations.
+
+    The museum has a budget of $200,000 for next year's exhibition and is considering two approaches.
+
+    Option A: Display the Original Painting
+    • Would cost approximately $170,000, including a protective display case and special lighting.
+    • Could attract an estimated 9,000 visitors during the year.
+    • In a survey of 800 previous museum visitors, 68% preferred seeing original artworks rather than reproductions.
+    • However, the survey did not include people who rarely or never visit museums.
+    • Conservation experts warn that even with protective measures, prolonged display could cause some irreversible fading.
+
+    Option B: Display a High-Quality Reproduction
+    • Would cost approximately $120,000, including a reproduction and an online exhibition.
+    • Would allow the original painting to remain safely stored while making the artwork accessible to people outside the region.
+    • Visitors could still see the reproduction in person, but some might consider the experience less meaningful than viewing the original.
+    • The effects on museum attendance and donations are uncertain, and online access may be limited for people without reliable internet.
+
+    The museum must decide whether to display the original, use a reproduction, or develop a modified approach within its available budget.
+
+    Task: Based only on the information above, recommend what the museum should do.
+  questions:
+    - id: post_q1
+      construct: recommendation
+      prompt: What do you recommend?
+    - id: post_q2
+      construct: evidence_reasoning
+      prompt: What information or evidence is most important in reaching your recommendation, and why?
+    - id: post_q3
+      construct: counterargument
+      prompt: What is the strongest concern or argument against your recommendation?
+    - id: post_q4
+      construct: uncertainty_revision
+      prompt: What uncertainty or new information could change your decision?

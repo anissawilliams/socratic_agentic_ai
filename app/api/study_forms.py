@@ -71,8 +71,8 @@ def _rpc(name: str, params: dict):
 def _survey() -> dict:
     with SURVEY_PATH.open(encoding="utf-8") as handle:
         data = yaml.safe_load(handle)
-    if len(data.get("likert", [])) != 4:
-        raise ValueError("final_survey.yaml must define exactly 4 Likert items")
+    if len(data.get("likert", [])) != 6 or len(data.get("open", [])) != 2:
+        raise ValueError("final_survey.yaml must define 6 Likert items and 2 open questions")
     return data
 
 
@@ -141,21 +141,27 @@ class SurveyItem(BaseModel):
 class SurveyContent(BaseModel):
     instrument_key: str
     instrument_version: str
+    intro: str | None = None
     scale: list[str]
     likert: list[SurveyItem]
-    open: SurveyItem
+    open: list[SurveyItem]
 
 
 class SurveySubmission(BaseModel):
     instrument_key: str
     instrument_version: str
-    likert: list[int] = Field(min_length=4, max_length=4)
-    open_response: str | None = Field(default=None, max_length=5000)
+    likert: list[int] = Field(min_length=6, max_length=6)
+    open_responses: list[str] = Field(min_length=2, max_length=2)
 
     @model_validator(mode="after")
-    def _likert_range(self):
+    def _validate(self):
         if any(value < 1 or value > 5 for value in self.likert):
             raise ValueError("Each rating must be between 1 and 5.")
+        self.open_responses = [text.strip() for text in self.open_responses]
+        if any(not text for text in self.open_responses):
+            raise ValueError("Please answer both written questions.")
+        if any(len(text) > 5000 for text in self.open_responses):
+            raise ValueError("Each written answer must be 5000 characters or fewer.")
         return self
 
 
@@ -166,6 +172,7 @@ def get_survey(participant: dict = Depends(require_participant)):
     return SurveyContent(
         instrument_key=survey["key"],
         instrument_version=survey["version"],
+        intro=survey.get("intro"),
         scale=survey["scale"],
         likert=survey["likert"],
         open=survey["open"],
@@ -188,7 +195,8 @@ def submit_survey(
             detail="The survey was updated. Please refresh the page.",
         )
 
-    l1, l2, l3, l4 = submission.likert
+    l1, l2, l3, l4, l5, l6 = submission.likert
+    open_1, open_2 = submission.open_responses
     submitted_at = _rpc(
         "submit_final_survey",
         {
@@ -199,7 +207,10 @@ def submit_survey(
             "p_likert_2": l2,
             "p_likert_3": l3,
             "p_likert_4": l4,
-            "p_open_response": submission.open_response,
+            "p_likert_5": l5,
+            "p_likert_6": l6,
+            "p_open_response": open_1,
+            "p_open_response_2": open_2,
         },
     )
     return SubmittedResponse(submitted_at=str(submitted_at))

@@ -7,7 +7,7 @@ export default function SurveyForm({ onSubmitted }) {
   const [survey, setSurvey] = useState(null);
   const [loadError, setLoadError] = useState("");
   const [ratings, setRatings] = useState({});
-  const [openResponse, setOpenResponse] = useState("");
+  const [openAnswers, setOpenAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -28,6 +28,10 @@ export default function SurveyForm({ onSubmitted }) {
       setError("Please answer every rating question.");
       return;
     }
+    if (survey.open.some((item) => !(openAnswers[item.id] || "").trim())) {
+      setError("Please answer both written questions.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -35,7 +39,7 @@ export default function SurveyForm({ onSubmitted }) {
         instrument_key: survey.instrument_key,
         instrument_version: survey.instrument_version,
         likert: survey.likert.map((item) => ratings[item.id]),
-        open_response: openResponse.trim() || null,
+        open_responses: survey.open.map((item) => openAnswers[item.id].trim()),
       });
       await onSubmitted();
     } catch (submissionError) {
@@ -50,6 +54,7 @@ export default function SurveyForm({ onSubmitted }) {
         <header>
           <p className="assessment-form__eyebrow">Almost done</p>
           <h1>A few questions about your experience</h1>
+          {survey.intro && <p>{survey.intro}</p>}
         </header>
 
         {survey.likert.map((item, index) => (
@@ -76,17 +81,22 @@ export default function SurveyForm({ onSubmitted }) {
           </fieldset>
         ))}
 
-        <label className="assessment-form__question">
-          <span>
-            {survey.likert.length + 1}. {survey.open.prompt} (optional)
-          </span>
-          <textarea
-            rows={4}
-            maxLength={5000}
-            value={openResponse}
-            onChange={(event) => setOpenResponse(event.target.value)}
-          />
-        </label>
+        {survey.open.map((item, index) => (
+          <label className="assessment-form__question" key={item.id}>
+            <span>
+              {survey.likert.length + index + 1}. {item.prompt}
+            </span>
+            <textarea
+              rows={4}
+              maxLength={5000}
+              required
+              value={openAnswers[item.id] || ""}
+              onChange={(event) =>
+                setOpenAnswers((current) => ({ ...current, [item.id]: event.target.value }))
+              }
+            />
+          </label>
+        ))}
 
         {error && <p className="assessment-form__error">{error}</p>}
 

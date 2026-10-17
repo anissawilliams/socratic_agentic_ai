@@ -1,0 +1,30 @@
+# Socratic tutor content for the Round 2 pretest scenario.
+# DRAFT for research-team review: opening_question and learning_objective.
+# Bump `version` whenever any text below changes.
+
+key: packaging_waste
+version: 0.1.0
+title: Reducing Packaging Waste at a Retail Company
+
+# The tutor's first turn: invites a stated position for elenchus to examine.
+opening_question: >-
+  Looking at the packaging waste scenario, what do you think the company
+  should do, and what is your main reason?
+
+# Used by the evaluator to judge progress. Never shown to students.
+learning_objective: >-
+  Reach and justify a recommendation about whether the company should adopt
+  recyclable packaging, reusable packaging, test further, or combine
+  elements within its $500,000 budget, reasoning from the evidence provided.
+  A strong account recognizes that fully adopting both options ($800,000)
+  exceeds the budget, so any combination must be partial (for example,
+  recyclable packaging at $330,000 leaves $170,000); interprets the trial
+  correctly (650 of 1,000 containers, or 65%, were returned after the first
+  use, which makes the four-reuse condition behind Option B's 45%-55%
+  estimate doubtful); notes that Option A's benefit depends on customers'
+  access to recycling, which varies by location; recognizes that the
+  environmental cost of cleaning and transporting returned containers has
+  not been evaluated; considers the strongest argument against the chosen
+  approach; and identifies what uncertainty or new information could change
+  the decision. The learner does not need to address every factor; a
+  well-reasoned account that applies several of them is sufficient.
