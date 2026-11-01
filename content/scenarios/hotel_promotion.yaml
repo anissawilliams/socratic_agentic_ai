@@ -1,0 +1,32 @@
+# Socratic tutor content for the Georgia State Round 1 pretest scenario.
+# DRAFT for research-team review: opening_question and learning_objective.
+# Bump `version` whenever any text below changes.
+
+key: hotel_promotion
+version: 0.1.0
+title: Communicating Hotel Booking Performance
+
+# The tutor's first turn: invites a stated position for elenchus to examine.
+opening_question: >-
+  Looking at the hotel promotion scenario, what do you think the company
+  should do about expanding the promotion, and what is your main reason?
+
+# Used by the evaluator to judge progress. Never shown to students.
+learning_objective: >-
+  Reach and justify a recommendation about whether to expand, test further,
+  or modify the promotion, and how the analyst should communicate the
+  evidence, reasoning from the information provided. A strong account
+  compares the participating hotels with the others rather than looking at
+  the 12% increase alone (participating hotels rose by about 24 bookings or
+  12%, the others by about 10 bookings or roughly 6%, so the difference that
+  might be due to the promotion is smaller than it first appears); recognizes
+  that seasonal demand raised bookings everywhere; notes that the
+  participating hotels were chosen for strong online performance rather than
+  at random, so they may not represent the other hotels; notes that two of
+  the eight declined; identifies that the chart's axis starting at 175
+  exaggerates the change and that calling the promotion "proven" overstates
+  the evidence; considers the strongest argument against the chosen approach
+  (for example, the cost of delay); and identifies what new information, such
+  as a randomized or longer test, could change the decision. The learner does
+  not need to address every factor; a well-reasoned account that applies
+  several of them is sufficient.

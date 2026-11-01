@@ -1,0 +1,90 @@
+# Georgia State (MSA 8030) Round 1 near-transfer instrument.
+# Pretest: Communicating Hotel Booking Performance.
+# Posttest: Communicating Customer Support Performance.
+# Bump `version` (and the scenario_version that changed) on ANY text edit.
+
+key: round1_hotel_support
+version: 1.0.0
+status: active
+transfer_type: near
+cohort: round1
+
+# Both AI conditions discuss the pretest scenario. The tutor must never
+# receive the learner's pretest answers.
+tutor_scenario_key: hotel_promotion
+
+pretest:
+  scenario_key: hotel_promotion
+  scenario_version: 1.0.0
+  scenario_title: Communicating Hotel Booking Performance
+  scenario_text: |-
+    A hotel company operates 24 hotels and recently tested a new online promotion at eight locations. Management is considering expanding the promotion to all hotels.
+
+    The marketing director believes the promotion was successful and has already described it as a "proven strategy" in an internal meeting. However, the finance director questions whether the promotion actually caused the increase in bookings. Management has asked an analyst to prepare a data-driven presentation to help settle the disagreement.
+
+    The analyst has collected the following information from a six-week period:
+
+    • At the eight participating hotels, average weekly bookings increased from 200 to 224 per hotel, representing a 12% increase.
+    • At the other 16 hotels, average weekly bookings increased from 180 to 190 per hotel during the same period.
+    • Six of the eight participating hotels experienced increased bookings, while two experienced declines.
+    • The presentation includes a bar chart comparing bookings before and after the promotion. The vertical axis begins at 175 rather than zero, making the increase appear particularly dramatic.
+    • The participating hotels were selected partly because of their historically strong online booking performance, rather than through random selection.
+    • The promotion coincided with a period of increased seasonal travel demand, which may have influenced bookings across all hotels.
+
+    The marketing director argues that delaying expansion could mean losing a valuable business opportunity. The finance director argues that expanding without stronger evidence could waste the company's marketing budget.
+
+    The analyst must decide how to communicate these findings to management and whether the available evidence supports recommending an expansion of the promotion.
+
+    Task: Based only on the information above, recommend what the company should do.
+  questions:
+    - id: pre_q1
+      construct: recommendation
+      prompt: What do you recommend?
+    - id: pre_q2
+      construct: evidence_reasoning
+      prompt: What information or evidence is most important in reaching your recommendation, and why?
+    - id: pre_q3
+      construct: counterargument
+      prompt: What is the strongest concern or argument against your recommendation?
+    - id: pre_q4
+      construct: uncertainty_revision
+      prompt: What uncertainty or new information could change your decision?
+
+posttest:
+  scenario_key: customer_support
+  scenario_version: 1.0.0
+  scenario_title: Communicating Customer Support Performance
+  scenario_text: |-
+    A software company provides customer support through phone and live chat services. Management is reviewing the performance of these services and considering whether to shift additional staff and resources toward one of them.
+
+    The operations director believes live chat is more efficient and wants to shift staff away from phone support. However, the phone support manager argues that this would be a serious mistake because phone agents handle the company's most difficult customer problems.
+
+    The company has prepared a dashboard summarizing customer support performance over the past month.
+
+    Based on the available data:
+
+    • Phone support handled 1,200 customer requests, of which 900 were resolved within one day.
+    • Live chat handled 600 customer requests, of which 510 were resolved within one day.
+    • The dashboard uses a bar chart comparing the total number of requests resolved within one day. Its headline states, "Phone Support Outperforms Live Chat," because phone support resolves more requests.
+    • The average time to receive an initial response was eight minutes for phone support and three minutes for live chat.
+    • Phone support generally handles more complicated technical issues, while live chat receives more routine questions, which may affect direct comparisons.
+    • Approximately 15% of all customer support requests arrive through email and are excluded from the dashboard. The report also provides limited information about customer satisfaction with each service.
+
+    The operations director argues that maintaining the current staffing arrangement wastes resources, while the phone support manager warns that reducing phone support could damage customer relationships. Management wants a recommendation before making its staffing decisions.
+
+    The analyst must decide how to interpret and communicate the performance results and whether they provide sufficient evidence to justify changing staffing and resource allocation.
+
+    Task: Based only on the information above, recommend what the company should do.
+  questions:
+    - id: post_q1
+      construct: recommendation
+      prompt: What do you recommend?
+    - id: post_q2
+      construct: evidence_reasoning
+      prompt: What information or evidence is most important in reaching your recommendation, and why?
+    - id: post_q3
+      construct: counterargument
+      prompt: What is the strongest concern or argument against your recommendation?
+    - id: post_q4
+      construct: uncertainty_revision
+      prompt: What uncertainty or new information could change your decision?
