@@ -10,7 +10,7 @@
 
 .assessment-form {
   box-sizing: border-box;
-  width: min(760px, 100%);
+  width: min(1040px, 100%); /* Changed from 760px  */
   margin: 0 auto;
   padding: 36px 40px;
   border: 1px solid var(--border, #dce8f0);
