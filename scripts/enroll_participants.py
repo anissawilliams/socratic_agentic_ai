@@ -159,8 +159,8 @@ def main() -> None:
                 index=index,
                 participant_code=code,
                 is_test=False,
-                # Placeholder only: the real identifier never enters the database.
-                email=f"participant-{uuid.uuid4().hex[:12]}@study.local",
+                # No identifier is passed: create_participant stores its own
+                # placeholder email, so the student ID never enters the database.
             )
             writer.writerow({
                 "student_id": ident,
