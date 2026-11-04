@@ -1,0 +1,74 @@
+# Georgia State (MSA 8770) Round 1 near-transfer instrument.
+# Pretest: Automating Invoice Reconciliation with AI.
+# Posttest: Managing Employee System Access with AI.
+# Bump `version` (and changed `scenario_version`) on any text edit.
+# Both AI conditions discuss only the pretest scenario; pretest answers must not be passed to the tutor.
+
+key: round1_invoice_access
+version: 1.0.0
+status: active
+transfer_type: near
+cohort: gsu-msa8770
+tutor_scenario_key: invoice_reconciliation
+pretest:
+  scenario_key: invoice_reconciliation
+  scenario_version: 1.0.0
+  scenario_title: Automating Invoice Reconciliation with AI
+  scenario_text: |-
+    A wholesale company processes approximately 4,000 supplier invoices each month. The company is considering an AI system that extracts invoice information, compares it with purchase orders and delivery records, identifies discrepancies, and recommends whether invoices should be approved for payment or flagged for further review.
+
+    The company tested the system on 600 invoices:
+
+    • For 495 invoices, the AI's recommendations were consistent with decisions made by experienced finance staff.
+    • Among 52 invoices with missing delivery confirmations, the AI recommended approving payment for 17.
+    • In 21 cases, the AI relied on outdated supplier information, raising concerns about the accuracy of its recommendations.
+    • An automated validation rule identified 11 of the 17 potentially premature payment approvals. The remaining six were identified during human review before payments were processed.
+    • The AI could prepare an invoice recommendation in approximately two minutes, compared with eight minutes for manual processing. However, human approval added an average of five minutes to the AI-assisted process.
+    • The pilot included relatively few invoices involving complicated purchase orders or unusual payment arrangements, so the system's reliability in these situations remains uncertain.
+
+    The company must decide whether to expand the system, permit automatic approval of certain invoices, require human verification, or improve the system before using it more broadly.
+    Task: Based only on the information above, recommend what the company should do.
+  questions:
+  - id: pre_q1
+    construct: recommendation
+    prompt: What do you recommend?
+  - id: pre_q2
+    construct: evidence_reasoning
+    prompt: What information or evidence is most important in reaching your recommendation, and why?
+  - id: pre_q3
+    construct: counterargument
+    prompt: What is the strongest concern or argument against your recommendation?
+  - id: pre_q4
+    construct: uncertainty_revision
+    prompt: What uncertainty or new information could change your decision?
+posttest:
+  scenario_key: employee_system_access
+  scenario_version: 1.0.0
+  scenario_title: Managing Employee System Access with AI
+  scenario_text: |-
+    A company with approximately 2,500 employees receives around 1,200 requests each month to create, change, or remove employee access to internal software systems. The company is considering an AI system that reviews employee roles, retrieves access policies, recommends appropriate permissions, and initiates approved access changes.
+
+    The system was tested on 400 employee access requests:
+
+    • For 335 requests, the AI's recommendations matched those made by experienced IT administrators.
+    • In 36 cases, the AI recommended granting employees broader access than their job responsibilities required.
+    • An automated access control check blocked 28 of these 36 recommendations. The remaining eight were identified during human review.
+    • Approximately 40 requests involved employee records that had not been updated to reflect recent changes in job responsibilities.
+    • The AI could generate an access recommendation in approximately four minutes, compared with 25 minutes for manual review. However, obtaining the necessary manager approval sometimes required several additional hours.
+    • The system recorded its recommendations, but the pilot did not consistently capture which manager authorized each change. The testing also included relatively few requests involving highly sensitive internal systems.
+
+    The company must decide how much authority to give the AI system, which access decisions should require human approval, and whether its current performance and safeguards justify broader deployment.
+    Task: Based only on the information above, recommend what the company should do.
+  questions:
+  - id: post_q1
+    construct: recommendation
+    prompt: What do you recommend?
+  - id: post_q2
+    construct: evidence_reasoning
+    prompt: What information or evidence is most important in reaching your recommendation, and why?
+  - id: post_q3
+    construct: counterargument
+    prompt: What is the strongest concern or argument against your recommendation?
+  - id: post_q4
+    construct: uncertainty_revision
+    prompt: What uncertainty or new information could change your decision?

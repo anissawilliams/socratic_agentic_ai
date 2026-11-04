@@ -1,0 +1,34 @@
+# Socratic tutor content for Georgia State MSA 8770 Round 1 pretest.
+# DRAFT for research-team review: opening_question and learning_objective.
+# Bump `version` whenever any text below changes.
+
+key: invoice_reconciliation
+version: 0.1.0
+title: Automating Invoice Reconciliation with AI
+
+# First tutor turn; elicits a position to examine Socratically.
+opening_question: >-
+  Based on the invoice reconciliation pilot, what would you recommend
+  the company do next, and what is the main reason for your choice?
+
+# Evaluator-facing only; do not show this learning objective to students.
+learning_objective: >-
+  Reach and justify a defensible recommendation about whether to expand the
+  invoice AI system, allow any automatic approvals, retain human verification,
+  or improve and retest the system, using only the pilot evidence. Strong
+  reasoning weighs the agreement with finance staff (495 of 600, or 82.5%)
+  against the consequences of approving invoices without delivery confirmation
+  (17 of 52), including that an automated rule caught 11 of those 17 and human
+  review caught the remaining six. It considers outdated supplier information
+  in 21 cases, and distinguishes the AI's two-minute recommendation time from
+  total AI-assisted processing time when five minutes of human approval are
+  included (about seven minutes, versus eight minutes manually). It recognizes
+  the limited testing of complicated purchase orders and unusual payment
+  arrangements, and weighs financial risk and safeguards against potential
+  efficiency gains. A strong response addresses a serious counterargument to
+  its own recommendation and identifies what additional evidence, such as
+  performance on complex cases, reliable supplier data, validation coverage,
+  or safe approval thresholds, could change the decision. The learner need
+  not mention every factor; a coherent, evidence-based and appropriately
+  qualified argument is sufficient. Do not require a single predetermined
+  policy choice or treat agreement with human staff as proof of correctness.
