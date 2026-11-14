@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Socratic agentic tutor, system architecture.
+  Print size: 180 mm by 172 mm. ViewBox units are 0.1 mm.
+  Text is live, not outlined. Each region is a named group.
+  Edit this file, or edit socratic-architecture.drawio and re-export.
+  Do not put a figure number in the image; that belongs in the caption.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="180mm" height="172mm" viewBox="0 0 1800 1720" role="img" aria-labelledby="figTitle figDesc">
+  <title id="figTitle">Architecture of the Socratic agentic tutor</title>
+  <desc id="figDesc">Study session from sign-in through survey, then the runtime. A study client and API fork into a direct-chat control and a Socratic LangGraph. The graph evaluates the learner, gates completion on the session goal and minimum time, chooses a move, applies a phase, and dispatches one of four roles. Both conditions share a language-model service and a PostgreSQL research record.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9.2" refY="4" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#1A1A1A"/>
+    </marker>
+    <marker id="arrow-rev" viewBox="0 0 10 8" refX="0.8" refY="4" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#1A1A1A"/>
+    </marker>
+    <style>
+      text { font-family: Helvetica, Arial, sans-serif; fill: #1A1A1A; }
+      .label { font-size: 36px; font-weight: 700; }
+      .title { font-size: 32px; font-weight: 700; }
+      .node { font-size: 28px; font-weight: 700; }
+      .body { font-size: 26px; font-weight: 400; }
+      .small { font-size: 24px; font-weight: 400; fill: #222222; }
+      .tech { font-size: 24px; font-weight: 400; fill: #444444; }
+      .box { fill: #FFFFFF; stroke: #1A1A1A; stroke-width: 2.25; }
+      .panel-control { fill: #F4F4F4; stroke: #1A1A1A; stroke-width: 2.25; }
+      .panel-socratic { fill: #F7F1E6; stroke: #1A1A1A; stroke-width: 2.25; }
+      .accent { fill: #F7F1E6; stroke: #1A1A1A; stroke-width: 2.25; }
+      .exit { fill: #F3E6D4; stroke: #1A1A1A; stroke-width: 2.25; }
+      .line { stroke: #1A1A1A; stroke-width: 2.25; fill: none; }
+      .hair { stroke: #C4C4C4; stroke-width: 1.75; fill: none; }
+    </style>
+  </defs>
+
+  <rect width="1800" height="1720" fill="#FFFFFF"/>
+
+  <g id="study-session">
+    <text class="label" x="40" y="48">(a) Study session</text>
+
+    <g id="stage-sign-in">
+      <rect class="box" x="40" y="68" width="250" height="112" rx="3"/>
+      <text class="title" x="165" y="114" text-anchor="middle">Study code</text>
+      <text class="body" x="165" y="148" text-anchor="middle">Sign in</text>
+    </g>
+    <g id="stage-demographics">
+      <rect class="box" x="330" y="68" width="250" height="112" rx="3"/>
+      <text class="title" x="455" y="114" text-anchor="middle">Demographics</text>
+      <text class="body" x="455" y="148" text-anchor="middle">Untimed</text>
+    </g>
+    <g id="stage-pretest">
+      <rect class="box" x="620" y="68" width="250" height="112" rx="3"/>
+      <text class="title" x="745" y="114" text-anchor="middle">Pretest</text>
+      <text class="body" x="745" y="148" text-anchor="middle">Timed, no tutor</text>
+    </g>
+    <g id="stage-tutor">
+      <rect class="accent" x="910" y="68" width="250" height="112" rx="3"/>
+      <text class="title" x="1035" y="114" text-anchor="middle">Tutor</text>
+      <text class="body" x="1035" y="148" text-anchor="middle">Timed dialogue</text>
+    </g>
+    <g id="stage-posttest">
+      <rect class="box" x="1200" y="68" width="250" height="112" rx="3"/>
+      <text class="title" x="1325" y="114" text-anchor="middle">Posttest</text>
+      <text class="body" x="1325" y="148" text-anchor="middle">Timed, no tutor</text>
+    </g>
+    <g id="stage-survey">
+      <rect class="box" x="1490" y="68" width="270" height="112" rx="3"/>
+      <text class="title" x="1625" y="114" text-anchor="middle">Survey</text>
+      <text class="body" x="1625" y="148" text-anchor="middle">Untimed</text>
+    </g>
+
+    <path class="line" marker-end="url(#arrow)" d="M290 124 H322"/>
+    <path class="line" marker-end="url(#arrow)" d="M580 124 H612"/>
+    <path class="line" marker-end="url(#arrow)" d="M870 124 H902"/>
+    <path class="line" marker-end="url(#arrow)" d="M1160 124 H1192"/>
+    <path class="line" marker-end="url(#arrow)" d="M1450 124 H1482"/>
+
+    <text class="small" x="40" y="214">Assignment is fixed before sign-in: condition, scenario, and instruments.</text>
+    <text class="small" x="40" y="244">Pretest answers are stored and are not given to the tutor.</text>
+    <path class="hair" d="M40 268 H1760"/>
+  </g>
+
+  <g id="runtime">
+    <text class="label" x="40" y="312">(b) Runtime</text>
+
+    <g id="learner">
+      <rect class="box" x="40" y="332" width="220" height="100" rx="3"/>
+      <text class="title" x="150" y="390" text-anchor="middle">Learner</text>
+    </g>
+    <g id="client">
+      <rect class="box" x="316" y="332" width="1444" height="100" rx="3"/>
+      <text class="title" x="340" y="372">Study client</text>
+      <text class="tech" x="1736" y="372" text-anchor="end">React</text>
+      <text class="body" x="340" y="406">Scenario panel, dialogue, phase timers, assessments, and survey</text>
+    </g>
+    <path class="line" marker-start="url(#arrow-rev)" marker-end="url(#arrow)" d="M260 382 H308"/>
+
+    <g id="api">
+      <rect class="box" x="40" y="468" width="1720" height="100" rx="3"/>
+      <text class="title" x="64" y="508">Application API</text>
+      <text class="tech" x="1736" y="508" text-anchor="end">FastAPI</text>
+      <text class="body" x="64" y="542">Authorization, study stage, assessments, timer, and tutor session</text>
+    </g>
+    <path class="line" marker-start="url(#arrow-rev)" marker-end="url(#arrow)" d="M900 432 V460"/>
+
+    <path class="line" d="M900 568 V604"/>
+    <path class="line" d="M250 604 H1124"/>
+    <path class="line" marker-end="url(#arrow)" d="M250 604 V636"/>
+    <path class="line" marker-end="url(#arrow)" d="M1124 604 V636"/>
+    <text class="small" x="264" y="598">Direct chat</text>
+    <text class="small" x="1040" y="598">Socratic</text>
+
+    <g id="control">
+      <rect class="panel-control" x="40" y="644" width="420" height="668" rx="3"/>
+      <text class="title" x="64" y="708">Control condition</text>
+      <text class="small" x="64" y="742">Direct chat</text>
+      <text class="body" x="64" y="812">One completion each turn.</text>
+      <text class="body" x="64" y="850">The learner chooses</text>
+      <text class="body" x="64" y="884">the topic.</text>
+      <text class="body" x="64" y="944">No phase, evaluator,</text>
+      <text class="body" x="64" y="978">or router.</text>
+      <path class="hair" d="M64 1036 H436"/>
+      <text class="small" x="64" y="1084">Same scenario, model,</text>
+      <text class="small" x="64" y="1116">temperature, and timer</text>
+      <text class="small" x="64" y="1148">as the Socratic arm.</text>
+      <text class="small" x="64" y="1212">Opens with a neutral</text>
+      <text class="small" x="64" y="1244">invitation.</text>
+    </g>
+
+    <g id="socratic">
+      <rect class="panel-socratic" x="488" y="644" width="1272" height="668" rx="3"/>
+      <text class="title" x="512" y="688">Socratic condition</text>
+      <text class="small" x="512" y="720">One LangGraph run per learner message. Opens in Elenchus.</text>
+
+      <g id="evaluate">
+        <rect class="box" x="512" y="748" width="216" height="112" rx="3"/>
+        <text class="node" x="620" y="786" text-anchor="middle">Evaluate</text>
+        <text class="small" x="620" y="816" text-anchor="middle">Phase criteria and</text>
+        <text class="small" x="620" y="842" text-anchor="middle">scenario goal</text>
+      </g>
+      <g id="gate">
+        <rect class="box" x="744" y="748" width="280" height="112" rx="3"/>
+        <text class="node" x="884" y="786" text-anchor="middle">Gate</text>
+        <text class="small" x="884" y="816" text-anchor="middle">Goal met and minimum</text>
+        <text class="small" x="884" y="842" text-anchor="middle">time reached?</text>
+      </g>
+      <g id="route">
+        <rect class="box" x="1124" y="748" width="210" height="112" rx="3"/>
+        <text class="node" x="1229" y="786" text-anchor="middle">Choose move</text>
+        <text class="small" x="1229" y="816" text-anchor="middle">Role, topic, move,</text>
+        <text class="small" x="1229" y="842" text-anchor="middle">and target</text>
+      </g>
+      <g id="apply">
+        <rect class="box" x="1350" y="748" width="200" height="112" rx="3"/>
+        <text class="node" x="1450" y="786" text-anchor="middle">Apply phase</text>
+        <text class="small" x="1450" y="816" text-anchor="middle">Stay, switch,</text>
+        <text class="small" x="1450" y="842" text-anchor="middle">or revisit</text>
+      </g>
+      <g id="generate">
+        <rect class="box" x="1566" y="748" width="170" height="112" rx="3"/>
+        <text class="node" x="1651" y="786" text-anchor="middle">Generate</text>
+        <text class="small" x="1651" y="816" text-anchor="middle">One question</text>
+        <text class="small" x="1651" y="842" text-anchor="middle">for that move</text>
+      </g>
+
+      <path class="line" marker-end="url(#arrow)" d="M728 804 H736"/>
+      <path class="line" marker-end="url(#arrow)" d="M1024 804 H1116"/>
+      <path class="line" marker-end="url(#arrow)" d="M1334 804 H1342"/>
+      <path class="line" marker-end="url(#arrow)" d="M1550 804 H1558"/>
+      <text class="small" x="1074" y="792" text-anchor="middle">not yet</text>
+
+      <g id="close">
+        <rect class="exit" x="744" y="888" width="280" height="78" rx="3"/>
+        <text class="node" x="884" y="918" text-anchor="middle">Close</text>
+        <text class="small" x="884" y="946" text-anchor="middle">Fixed sign-off</text>
+      </g>
+      <path class="line" marker-end="url(#arrow)" d="M884 860 V880"/>
+      <text class="small" x="894" y="876">yes</text>
+
+      <path class="line" d="M1651 860 V1004"/>
+      <path class="line" d="M512 1004 H1736"/>
+      <text class="small" x="1636" y="978" text-anchor="end">by phase</text>
+
+      <g id="agent-elenchus">
+        <rect class="box" x="512" y="1020" width="292" height="100" rx="3"/>
+        <text class="node" x="658" y="1060" text-anchor="middle">Elenchus</text>
+        <text class="small" x="658" y="1090" text-anchor="middle">Test one claim</text>
+      </g>
+      <g id="agent-aporia">
+        <rect class="box" x="820" y="1020" width="292" height="100" rx="3"/>
+        <text class="node" x="966" y="1060" text-anchor="middle">Aporia</text>
+        <text class="small" x="966" y="1090" text-anchor="middle">Name the impasse</text>
+      </g>
+      <g id="agent-maieutics">
+        <rect class="box" x="1128" y="1020" width="292" height="100" rx="3"/>
+        <text class="node" x="1274" y="1060" text-anchor="middle">Maieutics</text>
+        <text class="small" x="1274" y="1090" text-anchor="middle">Elicit the next step</text>
+      </g>
+      <g id="agent-dialectic">
+        <rect class="box" x="1436" y="1020" width="300" height="100" rx="3"/>
+        <text class="node" x="1586" y="1054" text-anchor="middle">Dialectic</text>
+        <text class="small" x="1586" y="1082" text-anchor="middle">State the account,</text>
+        <text class="small" x="1586" y="1106" text-anchor="middle">then test it once</text>
+      </g>
+
+      <text class="small" x="512" y="1160">Stay, switch, or revisit. The speaking role does not choose the next role.</text>
+      <text class="small" x="512" y="1190">If the goal is met early, the session continues and the next move is harder.</text>
+      <text class="small" x="512" y="1220">Moves: clarify, probe a reason, examine evidence, develop, test a limit,</text>
+      <text class="small" x="512" y="1250">apply a case, compare, synthesize, or scaffold.</text>
+    </g>
+
+    <text class="small" x="900" y="1360" text-anchor="middle">Shared by both conditions</text>
+    <path class="line" d="M250 1312 V1388"/>
+    <path class="line" d="M1124 1312 V1388"/>
+    <path class="line" d="M250 1388 H1330"/>
+    <path class="line" marker-end="url(#arrow)" d="M455 1388 V1412"/>
+    <path class="line" marker-end="url(#arrow)" d="M1330 1388 V1412"/>
+
+    <g id="model-service">
+      <rect class="box" x="40" y="1420" width="830" height="168" rx="3"/>
+      <text class="title" x="64" y="1460">Language-model service</text>
+      <text class="small" x="64" y="1498">Tutor and control share one model and temperature.</text>
+      <text class="small" x="64" y="1528">Evaluator and router use their own models.</text>
+      <text class="small" x="64" y="1558">Scenario text is sent with the call, then removed.</text>
+    </g>
+    <g id="research-record">
+      <rect class="box" x="898" y="1420" width="862" height="168" rx="3"/>
+      <text class="title" x="922" y="1460">Research record</text>
+      <text class="tech" x="1736" y="1460" text-anchor="end">PostgreSQL</text>
+      <text class="small" x="922" y="1498">Participation, assessment answers, and tutor turns.</text>
+      <text class="small" x="922" y="1528">A Socratic turn also stores its evaluation and route.</text>
+      <text class="small" x="922" y="1558">Latency, tokens, model name, and prompt-bundle hash.</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,83 @@
+# Scoring rubric for the pre- and posttest answers (LLM judge and human raters).
+# DRAFT for research-team review. Bump `version` whenever any text changes;
+# every score records the version and a fingerprint of this file.
+#
+# Every instrument asks the same four questions, so one rubric covers all
+# scenarios. `scenario_notes` lists, per scenario, the facts that make an
+# answer strong. Notes must exist for every scenario before the rubric is
+# frozen and posttests are scored.
+
+version: 0.2.0
+status: draft          # draft -> frozen (record the date in the study log)
+scale: [0, 3]
+
+general_rules:
+  - Score the quality of reasoning, not length, spelling, grammar or fluency in English. Many students write in a second language.
+  - Facts copied from the scenario without reasoning around them earn no extra credit.
+  - Judge only what the answer says. Do not reward or penalize the decision the student reached; any decision can score 3 if it is well reasoned.
+  - If the answer is blank, off-topic, or does not engage with the scenario, score 0.
+  - A factual misreading of the scenario that the reasoning depends on lowers the score by one level; a minor slip that does not affect the reasoning does not.
+  - Credit a level only when everything that level describes is present; when in doubt between two levels, give the lower one.
+
+constructs:
+  recommendation:
+    question: What do you recommend?
+    levels:
+      0: No recommendation, or it does not address the decision in the scenario.
+      1: Takes a side but is vague about what to do (for example "expand it" with no scope).
+      2: A clear recommendation someone could act on.
+      3: Clear, with its scope and conditions matched to the strength of the evidence. A firm decision can score 3 if the answer shows why the evidence is strong enough; a pilot or staged plan scores 3 only if it says what it would test or decide.
+  evidence_reasoning:
+    question: What information or evidence is most important in reaching your recommendation, and why?
+    levels:
+      0: No evidence, or only restates the recommendation.
+      1: Names facts from the scenario without explaining how they support the decision.
+      2: Connects specific evidence to the recommendation.
+      3: Uses the decisive evidence and judges how strong or weak it is (for example comparison groups, selection, sample size, timing, how numbers are presented).
+  counterargument:
+    question: What is the strongest concern or argument against your recommendation?
+    levels:
+      0: None, or not a genuine objection to the student's own recommendation.
+      1: A generic concern ("it might not work", "it could be expensive").
+      2: A specific, plausible objection grounded in the scenario.
+      3: A strong objection grounded in the scenario, plus a response to it or a weighing of it against the recommendation.
+  uncertainty_revision:
+    question: What uncertainty or new information could change your decision?
+    levels:
+      0: None, or "nothing would change my mind".
+      1: Vague uncertainty ("more data", "it depends").
+      2: Names specific missing information.
+      3: Names specific information and how it would change the decision (direction or threshold).
+
+# Facts that make an answer strong, per scenario_key. The hotel notes are
+# drafted from the tutor scenarios' learning objectives (pretests); posttest
+# notes are TODO for the research team. Notes guide the judge; an answer does not need to
+# mention all of them to score 3.
+scenario_notes:
+  hotel_promotion:
+    - Participating hotels gained about 24 weekly bookings (12%), the others about 10 (about 6%) over the same period, so the effect that may be due to the promotion is smaller than the headline 12%.
+    - Seasonal demand raised bookings at every hotel.
+    - Participating hotels were chosen for strong online performance, not at random, so they may not represent the other hotels; two of the eight declined.
+    - The chart's axis starts at 175, which exaggerates the change; calling the promotion "proven" overstates the evidence.
+    - Useful new information includes a randomized or longer test, or results outside the peak season.
+  customer_support: []        # TODO (GSU hotel posttest)
+  invoice_reconciliation:
+    - The AI agreed with finance staff on 495 of 600 invoices (82.5%), but agreement with staff is not proof of correctness.
+    - It recommended approving 17 of 52 invoices that lacked delivery confirmation; an automated rule caught 11 and human review caught the other 6, so safeguards mattered.
+    - Supplier information was outdated in 21 cases.
+    - The AI's 2-minute recommendation plus 5 minutes of human approval is about 7 minutes in total, versus 8 minutes manually, so the time saving is small.
+    - Complicated purchase orders and unusual payment arrangements were barely tested.
+    - Useful new information includes performance on complex cases, reliable supplier data, validation coverage, or safe thresholds for automatic approval.
+  employee_system_access: []  # TODO (GSU invoice posttest)
+  energy_assistance:
+    - About 70% of households classified high risk experienced severe hardship, versus about 20% overall, so the system is informative.
+    - But 180 of the 600 households that experienced hardship were classified lower risk, so it misses many.
+    - About 20% of households were flagged in the test, roughly 2,000 of the 10,000 eligible, far more than the 400 slots, and the system cannot rank households within a group.
+    - Immigrant households appear to be flagged more often, an unresolved fairness question.
+  cooling_centers: []         # TODO (Spain round 1 posttest)
+  packaging_waste:
+    - Adopting both options fully costs $800,000, over the $500,000 budget, so any combination must be partial (for example, Option A at $330,000 leaves $170,000).
+    - Only 650 of 1,000 containers (65%) were returned after the first use, which makes the four-reuse assumption behind Option B's 45%-55% estimate doubtful.
+    - Option A's benefit depends on customers' access to recycling, which varies by location.
+    - The environmental cost of cleaning and transporting returned containers has not been evaluated.
+  historical_painting: []     # TODO (Spain round 2 posttest)

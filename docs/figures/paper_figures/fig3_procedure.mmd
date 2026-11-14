@@ -1,0 +1,11 @@
+flowchart TB
+  RA["Stratified permuted-block<br/>randomization (block 4)"] --> R1
+  subgraph R1["Round 1"]
+    direction LR
+    D1["Demographics"] --> P1["Pretest<br/>7–9 min"] --> T1["Tutor session<br/>14–18 min"] --> Q1["Posttest<br/>7–9 min"]
+  end
+  R1 -->|"same condition"| R2
+  subgraph R2["Round 2"]
+    direction LR
+    P2["Pretest<br/>7–9 min"] --> T2["Tutor session<br/>14–18 min"] --> Q2["Posttest<br/>7–9 min"] --> SV["Survey"]
+  end

@@ -1,0 +1,9 @@
+flowchart TD
+  ST([Student message]) --> EV["evaluate_response<br/><i>Evaluator: decision, evidence,<br/>phase and session goal met?</i>"]
+  EV -->|"session goal met"| CS["complete_session"]
+  EV -->|"continue"| NM["choose_next_move<br/><i>Router: stay or switch, phase,<br/>move type, target</i>"]
+  NM --> SP["select_phase<br/><i>loads role prompt: Elenchus, Aporia,<br/>Maieutics or Dialectic</i>"]
+  SP --> GR["generate_response<br/><i>Role agent: one question</i>"]
+  GR --> LE["log_event"]
+  CS --> LE
+  LE --> EN([Tutor reply])

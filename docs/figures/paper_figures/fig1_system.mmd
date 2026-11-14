@@ -1,0 +1,11 @@
+flowchart LR
+  S(["Student<br/>(browser)"]) -->|message| API["Web application<br/>(timers, answer rules,<br/>condition assignment)"]
+  API -->|"Socratic condition"| G
+  API -->|"Control condition"| C["Single LLM call<br/>answers, explains, recommends"]
+  subgraph G["Socratic tutor: one graph run per turn"]
+    direction LR
+    E["Evaluator<br/>judges the reply"] -->|verdict| R["Router<br/>chooses the next move"]
+    R -->|"move + target"| A["Role agent<br/>writes one question"]
+  end
+  G -->|logged| DB[("Study database<br/>turns, verdicts, routing,<br/>latency, prompt versions")]
+  C -->|logged| DB
