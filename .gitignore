@@ -52,3 +52,11 @@ outputs/
 *assignment_key*.csv
 *mailing*.csv
 rosters/
+analysis/data/
+
+llm_call_latency.csv
+evaluator_comparison/
+
+*.zip
+
+docs/study_log/2026-11-20_smoke_test/
