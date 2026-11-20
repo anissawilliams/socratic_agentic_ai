@@ -201,7 +201,7 @@ class Study:
         return means.round(2)
 
     def survey_text(self) -> pd.DataFrame:
-        cols = [c for c in ["group", "condition", "open_response", "open_response_2"] if c in self.survey]
+        cols = [c for c in ["group", "condition", "primary_language_clean", "open_response", "open_response_2"] if c in self.survey]
         return self.survey[cols].sort_values(["group", "condition"]).reset_index(drop=True)
 
     def demographics_summary(self) -> pd.DataFrame:
@@ -252,6 +252,101 @@ class Study:
         t = self.turns[self.turns["condition"] == "Socratic"]
         return pd.crosstab(t["phase_before_code"].fillna("opening"), t["phase_after_code"].fillna("-"))
 
+    def latency(self) -> pd.DataFrame:
+        """Seconds from student message to tutor reply, per class, round and condition."""
+        t = self.turns[~self.turns["failed"]]
+        g = t.groupby(self.KEYS)["latency_s"]
+        out = pd.DataFrame({
+            "turns": g.size(),
+            "median_s": g.median(),
+            "p75_s": g.quantile(0.75),
+            "p90_s": g.quantile(0.90),
+            "max_s": g.max(),
+            "over_20s_%": g.apply(lambda s: (s > 20).mean() * 100),
+        })
+        return out.round(1)
+
+    def session_latency(self) -> pd.DataFrame:
+        """One row per tutor session: median and slowest reply, for linking to survey comments."""
+        t = self.turns[~self.turns["failed"]]
+        return (t.groupby(self.KEYS + ["study_participation_id"])["latency_s"]
+                .agg(turns="size", median_s="median", max_s="max").round(1).reset_index())
+
+    def repetition(self, threshold: float = 0.6) -> pd.DataFrame:
+        """For each Socratic turn, how similar the tutor's reply is to its earlier replies
+        in the same session (cosine similarity of word and two-word TF-IDF, 0 to 1).
+
+        A turn is a near-repeat when its similarity to any earlier reply reaches
+        `threshold`. Check a sample of flagged pairs by eye before reporting a threshold.
+        """
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.metrics.pairwise import cosine_similarity
+
+        t = self.turns[(self.turns["condition"] == "Socratic") & ~self.turns["failed"]]
+        t = t.sort_values(["study_participation_id", "turn_number"])
+        rows = []
+        for pid, conv in t.groupby("study_participation_id"):
+            replies = conv["tutor_response"].fillna("").tolist()
+            if len(replies) < 2:
+                continue
+            vec = TfidfVectorizer(ngram_range=(1, 2), stop_words="english").fit(replies)
+            sim = cosine_similarity(vec.transform(replies))
+            for i in range(1, len(replies)):
+                j = int(sim[i, :i].argmax())
+                rows.append({
+                    "group": conv["group"].iloc[0], "round_number": conv["round_number"].iloc[0],
+                    "study_participation_id": pid,
+                    "turn_number": conv["turn_number"].iloc[i],
+                    "most_similar_turn": conv["turn_number"].iloc[j],
+                    "similarity": round(float(sim[i, j]), 2),
+                    "near_repeat": bool(sim[i, j] >= threshold),
+                    "tutor_response": replies[i], "earlier_response": replies[j],
+                })
+        return pd.DataFrame(rows)
+
+    def repetition_summary(self, threshold: float = 0.6) -> pd.DataFrame:
+        """Share of Socratic turns that nearly repeat an earlier reply, and how concentrated
+        repeats are: a few looping sessions vs. a little everywhere."""
+        r = self.repetition(threshold)
+        if r.empty:
+            return pd.DataFrame()
+        per_session = r.groupby(["group", "round_number", "study_participation_id"])["near_repeat"].sum()
+        by = ["group", "round_number"]
+        return pd.DataFrame({
+            "turns": r.groupby(by).size(),
+            "near_repeat_turns_%": r.groupby(by)["near_repeat"].mean().mul(100),
+            "median_similarity": r.groupby(by)["similarity"].median(),
+            "sessions": per_session.groupby(level=by).size(),
+            "sessions_with_any_repeat": per_session.gt(0).groupby(level=by).sum(),
+            "sessions_with_3plus": per_session.ge(3).groupby(level=by).sum(),
+        }).round(1)
+
+    def topic_runs(self) -> pd.DataFrame:
+        """Repetition in meaning rather than wording: for each Socratic session, the longest
+        run of consecutive turns the router kept on the same topic (routing_topic_code),
+        and how many turns the evaluator said "stay". Needs the routing_decision and
+        response_evaluation exports."""
+        t = self.turns[(self.turns["condition"] == "Socratic") & ~self.turns["failed"]]
+        if "routing_topic_code" not in t:
+            return pd.DataFrame()
+        t = t.sort_values(["study_participation_id", "turn_number"])
+        rows = []
+        for pid, conv in t.groupby("study_participation_id"):
+            topics = conv["routing_topic_code"].fillna("").tolist()
+            longest = run = 1
+            for a, b in zip(topics, topics[1:]):
+                run = run + 1 if a and a == b else 1
+                longest = max(longest, run)
+            decision = conv.get("evaluation_decision_code", pd.Series(dtype=str))
+            rows.append({
+                "group": conv["group"].iloc[0], "round_number": conv["round_number"].iloc[0],
+                "study_participation_id": pid, "turns": len(conv),
+                "topics": conv["routing_topic_code"].nunique(),
+                "longest_same_topic_run": longest,
+                "stay_turns": int((decision == "stay").sum()),
+            })
+        return pd.DataFrame(rows)
+
     def tutor_supplied_numbers(self, content_dir: str | Path = "content") -> pd.DataFrame:
         """Socratic turns where the tutor states a number that is neither in the
         scenario text nor already written by the student.
@@ -290,6 +385,25 @@ KEEP_NAMES = {"phase_goal_satisfied", "session_goal_satisfied", "learner_contrib
               "session_unresolved_issue", "session_completion_reason"}
 
 
+LANGUAGE_ALIASES = {
+    "eng": "English", "english": "English", "en": "English",
+    "spanish": "Spanish", "español": "Spanish", "espanol": "Spanish", "castellano": "Spanish",
+    "catalan": "Catalan", "català": "Catalan", "inglés": "English", "ingles": "English", "englisch": "English",
+    "german": "German", "deutsch": "German", "spanisch": "Spanish",
+}
+
+
+def normalize_language(value) -> str:
+    """Tidy free-text language answers: 'english ' -> 'English'. Several languages
+    ('English and Spanish', 'English/Spanish') are kept as 'English; Spanish'."""
+    import re
+    if pd.isna(value) or not str(value).strip():
+        return ""
+    parts = [p.strip().strip(".").lower() for p in re.split(r"\s*(?:,|/|&|;|\band\b|\by\b|\bund\b)\s*", str(value)) if p.strip()]
+    names = [LANGUAGE_ALIASES.get(p, p.title()) for p in parts]
+    return "; ".join(dict.fromkeys(names))
+
+
 def _file_excludes(path: Path) -> set[str]:
     """Ids listed in the excludes file (first column; a 'note' column is optional).
 
@@ -304,6 +418,16 @@ def _file_excludes(path: Path) -> set[str]:
 
 def load_study(data_dir: str | Path, excludes_file: str | Path = EXCLUDES_FILE) -> Study:
     data_dir = Path(data_dir)
+    if not data_dir.is_dir():
+        raise FileNotFoundError(f"Data folder not found: {data_dir}")
+    if not list(data_dir.glob("export_*.csv")):
+        # Exports saved into dated subfolders (e.g. data/2026-11-08/): use the newest one.
+        dated = sorted(d for d in data_dir.iterdir() if d.is_dir() and list(d.glob("export_*.csv")))
+        if not dated:
+            found = ", ".join(sorted(p.name for p in data_dir.iterdir())[:10]) or "nothing"
+            raise FileNotFoundError(f"No export_*.csv files in {data_dir} (found: {found})")
+        data_dir = dated[-1]
+        print(f"Using exports in {data_dir}")
 
     def read(name: str) -> pd.DataFrame:
         path = data_dir / f"export_{name}.csv"
@@ -313,6 +437,13 @@ def load_study(data_dir: str | Path, excludes_file: str | Path = EXCLUDES_FILE) 
 
     subjects = read("study_subject")
     participation = read("study_participation")
+    for name, table, column in [("study_subject", subjects, "is_test"),
+                                ("study_participation", participation, "cohort_code")]:
+        if table.empty or column not in table:
+            have = ", ".join(sorted(p.name for p in data_dir.glob("*.csv"))) or "no CSV files"
+            raise FileNotFoundError(
+                f"export_{name}.csv in {data_dir} is missing, empty or has no '{column}' column. "
+                f"Files there: {have}")
 
     real = subjects.loc[_truthy(subjects["is_test"]) == False, "id"]  # noqa: E712
     real = real[~real.isin(EXCLUDED_SUBJECTS)]
@@ -390,6 +521,10 @@ def load_study(data_dir: str | Path, excludes_file: str | Path = EXCLUDES_FILE) 
     attempts["answer_words"] = attempts["id"].map(answers.groupby("assessment_attempt_id")["words"].sum()).fillna(0)
 
     survey = tag(read("survey_response"))
+    if "primary_language" in survey:
+        survey["primary_language_clean"] = survey["primary_language"].map(normalize_language)
+        survey["english_primary"] = survey["primary_language_clean"].str.split("; ").str[0].eq("English")
+        survey.loc[survey["primary_language_clean"] == "", "english_primary"] = pd.NA
 
     demographics = read("demographic_response")
     if not demographics.empty:

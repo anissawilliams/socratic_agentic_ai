@@ -5,6 +5,7 @@ Both forms are thin wrappers around idempotent database functions
 status, so a double-submit or a refresh can never create duplicates.
 """
 
+import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -18,6 +19,8 @@ from app.api.auth.dependencies import require_participant
 from app.services.assignment import current_study_participation
 from app.services.supabase import get_supabase_client
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/study", tags=["study-forms"])
 
@@ -85,6 +88,7 @@ class DemographicsSubmission(BaseModel):
     race_codes: list[RaceCode] = Field(min_length=1)
     race_other_description: str | None = Field(default=None, max_length=100)
     field_of_study: str = Field(min_length=1, max_length=100)
+    primary_language: str | None = Field(default=None, max_length=100)  # optional
 
     @model_validator(mode="after")
     def _other_description_matches(self):
@@ -100,6 +104,7 @@ class DemographicsSubmission(BaseModel):
         self.field_of_study = self.field_of_study.strip()
         if not self.field_of_study:
             raise ValueError("Please enter your field of study.")
+        self.primary_language = (self.primary_language or "").strip() or None
         return self
 
 
@@ -112,7 +117,7 @@ def submit_demographics(
     submission: DemographicsSubmission,
     participant: dict = Depends(require_participant),
 ):
-    _participation_at(participant, "demographics")
+    participation = _participation_at(participant, "demographics")
     submitted_at = _rpc(
         "submit_demographics",
         {
@@ -128,6 +133,20 @@ def submit_demographics(
             "p_field_of_study": submission.field_of_study,
         },
     )
+
+    # Optional primary language, added 2026-11-20. Saved to the row the database
+    # function just created; the function itself is unchanged. A failure here
+    # loses only this optional answer, never the rest of the demographics.
+    if submission.primary_language:
+        try:
+            get_supabase_client().table("demographic_response").update(
+                {"primary_language": submission.primary_language}
+            ).eq("study_participation_id", str(participation.id)).is_(
+                "primary_language", "null"
+            ).execute()
+        except APIError:
+            logger.exception("Could not save optional primary language")
+
     return SubmittedResponse(submitted_at=str(submitted_at))
 
 

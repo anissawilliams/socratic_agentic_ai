@@ -32,6 +32,7 @@ export default function DemographicsForm({ onSubmit }) {
   const [raceCodes, setRaceCodes] = useState([]);
   const [otherDescription, setOtherDescription] = useState("");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
+  const [primaryLanguage, setPrimaryLanguage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -72,6 +73,7 @@ export default function DemographicsForm({ onSubmit }) {
           ? otherDescription.trim()
           : null,
         field_of_study: fieldOfStudy.trim(),
+        primary_language: primaryLanguage.trim() || null,
       });
     } catch (submissionError) {
       setError(submissionError.message);
@@ -175,6 +177,18 @@ export default function DemographicsForm({ onSubmit }) {
             value={fieldOfStudy}
             onChange={(event) => setFieldOfStudy(event.target.value)}
             required
+          />
+        </label>
+
+        <label className="assessment-form__question">
+          <span>6. What is your primary language? <span className="assessment-form__optional">(optional)</span></span>
+          <input
+            type="text"
+            id="demographics-primary-language"
+            className="assessment-form__wide"
+            maxLength={100}
+            value={primaryLanguage}
+            onChange={(event) => setPrimaryLanguage(event.target.value)}
           />
         </label>
 
