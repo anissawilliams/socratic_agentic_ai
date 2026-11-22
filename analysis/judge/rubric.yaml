@@ -7,7 +7,7 @@
 # answer strong. Notes must exist for every scenario before the rubric is
 # frozen and posttests are scored.
 
-version: 0.2.0
+version: 0.3.0
 status: draft          # draft -> frozen (record the date in the study log)
 scale: [0, 3]
 
@@ -81,3 +81,10 @@ scenario_notes:
     - Option A's benefit depends on customers' access to recycling, which varies by location.
     - The environmental cost of cleaning and transporting returned containers has not been evaluated.
   historical_painting: []     # TODO (Spain round 2 posttest)
+  support_platform:       # Germany round 1 pretest
+    - The new platform was faster on every speed measure (average 22 to 18 minutes, median 17 to 14, 90th percentile 45 to 34), but more requests were reopened (9% versus 7%), so speed may have come at some cost in quality.
+    - The pilot ran only three weeks, with two of six teams that mainly handle routine requests, and excluded weekends, so it may not represent complex technical cases or the whole company.
+    - The agents' concern about routing difficult cases points at exactly the part of the work the pilot did not test.
+    - Higher operating cost is certain; the customer-satisfaction benefit is assumed, not measured.
+    - Useful new information includes a pilot with complex-case teams and weekends, reopen rates by request type, and measured customer satisfaction.
+  delivery_partner: []    # TODO (Germany round 1 posttest)

@@ -57,6 +57,10 @@ export default function DemographicsForm({ onSubmit }) {
       setError("Please enter your age as a whole number between 18 and 99, or leave it blank.");
       return;
     }
+    if (!primaryLanguage.trim()) {
+      setError("Please enter your primary language.");
+      return;
+    }
     if (raceCodes.length === 0) {
       setError("Please select at least one option for question 3.");
       return;
@@ -73,7 +77,7 @@ export default function DemographicsForm({ onSubmit }) {
           ? otherDescription.trim()
           : null,
         field_of_study: fieldOfStudy.trim(),
-        primary_language: primaryLanguage.trim() || null,
+        primary_language: primaryLanguage.trim(),
       });
     } catch (submissionError) {
       setError(submissionError.message);
@@ -181,7 +185,7 @@ export default function DemographicsForm({ onSubmit }) {
         </label>
 
         <label className="assessment-form__question">
-          <span>6. What is your primary language? <span className="assessment-form__optional">(optional)</span></span>
+          <span>6. What is your primary language?</span>
           <input
             type="text"
             id="demographics-primary-language"
@@ -189,6 +193,7 @@ export default function DemographicsForm({ onSubmit }) {
             maxLength={100}
             value={primaryLanguage}
             onChange={(event) => setPrimaryLanguage(event.target.value)}
+            required
           />
         </label>
 
