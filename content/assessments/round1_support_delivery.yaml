@@ -1,0 +1,101 @@
+# Germany Round 1 near-transfer instrument.
+# Pretest: Customer Support Platform. Posttest: Selecting a Delivery Partner.
+# Bump `version` (and the scenario_version that changed) on ANY text edit.
+
+key: round1_support_delivery
+version: 1.0.0
+status: active
+transfer_type: near
+cohort: round1
+
+# Both AI conditions discuss the pretest scenario. The tutor must never
+# receive the learner's pretest answers.
+tutor_scenario_key: support_platform
+
+pretest:
+  scenario_key: support_platform
+  scenario_version: 1.0.0
+  scenario_title: Customer Support Platform
+  scenario_text: |-
+    A software company is considering replacing its current customer-support platform with a new system that automatically routes customer requests to available support agents.
+
+    The company compared recent data:
+
+    Current platform
+    • 2,400 customer requests
+    • Average resolution time: 22 minutes
+    • Median resolution time: 17 minutes
+    • 90% of requests resolved within 45 minutes
+    • 7% of requests reopened after being marked resolved
+
+    New platform pilot
+    • 800 customer requests
+    • Average resolution time: 18 minutes
+    • Median resolution time: 14 minutes
+    • 90% of requests resolved within 34 minutes
+    • 9% of requests reopened
+
+    The new system appears faster, but the pilot was conducted for only three weeks with two of the company's six support teams. Those teams mainly handle routine customer requests, while several other teams deal with more complex technical problems. Weekend requests were also excluded.
+
+    The new platform would cost more to operate, but managers believe faster responses could improve customer satisfaction. Some support agents are also concerned that automatic routing may assign difficult cases less effectively than experienced employees.
+
+    The company must decide whether to adopt the new platform company-wide, expand the pilot, modify the system, or keep the current platform.
+
+    Task: Based only on the information above, recommend what the company should do.
+  questions:
+    - id: pre_q1
+      construct: recommendation
+      prompt: What do you recommend?
+    - id: pre_q2
+      construct: evidence_reasoning
+      prompt: What information or evidence is most important in reaching your recommendation, and why?
+    - id: pre_q3
+      construct: counterargument
+      prompt: What is the strongest concern or argument against your recommendation?
+    - id: pre_q4
+      construct: uncertainty_revision
+      prompt: What uncertainty or new information could change your decision?
+
+posttest:
+  scenario_key: delivery_partner
+  scenario_version: 1.0.0
+  scenario_title: Selecting a Delivery Partner
+  scenario_text: |-
+    An online retailer is considering replacing its current delivery company with a new provider. Delivery speed is important, but the retailer also cares about reliability, damaged packages, customer coverage, and cost.
+
+    During the same two-month evaluation period, the retailer compared the two providers.
+
+    Current provider
+    • 3,000 deliveries
+    • Median delivery time: 3.4 days
+    • 84% arrived within the promised delivery window
+    • 4% arrived damaged or required replacement
+    • Average shipping cost: €6.20 per package
+    • About 30% of deliveries were to rural areas
+
+    New provider
+    • 1,000 deliveries
+    • Median delivery time: 2.8 days
+    • 91% arrived within the promised delivery window
+    • 6% arrived damaged or required replacement
+    • Average shipping cost: €7.10 per package
+    • Only about 10% of deliveries were to rural areas
+
+    Rural customers normally account for approximately 30% of the retailer's total orders. The new provider says it could improve rural coverage if awarded the full contract, but the retailer does not yet have data to verify this. Switching providers would also require changes to the retailer's warehouse and tracking systems.
+
+    The retailer must decide whether to switch completely to the new provider, keep the current provider, continue testing, or use the two providers differently for different types of deliveries.
+
+    Task: Based only on the information above, recommend what the retailer should do.
+  questions:
+    - id: post_q1
+      construct: recommendation
+      prompt: What do you recommend?
+    - id: post_q2
+      construct: evidence_reasoning
+      prompt: What information or evidence is most important in reaching your recommendation, and why?
+    - id: post_q3
+      construct: counterargument
+      prompt: What is the strongest concern or argument against your recommendation?
+    - id: post_q4
+      construct: uncertainty_revision
+      prompt: What uncertainty or new information could change your decision?

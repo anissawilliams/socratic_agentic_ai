@@ -1,3 +1,4 @@
+
 """Round 1 demographics and Round 2 final survey.
 
 Both forms are thin wrappers around idempotent database functions
@@ -88,7 +89,7 @@ class DemographicsSubmission(BaseModel):
     race_codes: list[RaceCode] = Field(min_length=1)
     race_other_description: str | None = Field(default=None, max_length=100)
     field_of_study: str = Field(min_length=1, max_length=100)
-    primary_language: str | None = Field(default=None, max_length=100)  # optional
+    primary_language: str = Field(min_length=1, max_length=100)
 
     @model_validator(mode="after")
     def _other_description_matches(self):
@@ -104,7 +105,9 @@ class DemographicsSubmission(BaseModel):
         self.field_of_study = self.field_of_study.strip()
         if not self.field_of_study:
             raise ValueError("Please enter your field of study.")
-        self.primary_language = (self.primary_language or "").strip() or None
+        self.primary_language = self.primary_language.strip()
+        if not self.primary_language:
+            raise ValueError("Please enter your primary language.")
         return self
 
 
@@ -134,9 +137,9 @@ def submit_demographics(
         },
     )
 
-    # Optional primary language, added 2026-11-20. Saved to the row the database
-    # function just created; the function itself is unchanged. A failure here
-    # loses only this optional answer, never the rest of the demographics.
+    # Primary language (added 2026-11-20, required from 2026-11-22). Saved to the
+    # row the database function just created; the function itself is unchanged.
+    # A failure here is logged and does not undo the rest of the demographics.
     if submission.primary_language:
         try:
             get_supabase_client().table("demographic_response").update(
@@ -145,7 +148,7 @@ def submit_demographics(
                 "primary_language", "null"
             ).execute()
         except APIError:
-            logger.exception("Could not save optional primary language")
+            logger.exception("Could not save primary language")
 
     return SubmittedResponse(submitted_at=str(submitted_at))
 

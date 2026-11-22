@@ -1,0 +1,34 @@
+# Socratic tutor content for the Germany Round 1 pretest scenario.
+# Learning objective written by the study team on 2026-11-22 (Anissa Williams),
+# following the format of the earlier tutor scenarios.
+# Bump `version` whenever any text below changes.
+
+key: support_platform
+version: 1.0.0
+title: Customer Support Platform
+
+# The tutor's first turn: invites a stated position for elenchus to examine.
+opening_question: >-
+  Looking at the customer-support platform scenario, what do you think the
+  company should do about the new platform, and what is your main reason?
+
+# Used by the evaluator to judge progress. Never shown to students.
+learning_objective: >-
+  Reach and justify a recommendation about whether to adopt the new platform,
+  expand or modify the pilot, or keep the current platform, reasoning from the
+  information provided. A strong account recognizes that the new platform was
+  faster on every speed measure (average 22 to 18 minutes, median 17 to 14,
+  90th percentile 45 to 34) but that more requests were reopened (9% versus
+  7%), so faster resolution may have come partly at the cost of quality;
+  notes that the pilot is not a fair comparison with the whole company,
+  because it ran for only three weeks, with two of six teams that mainly
+  handle routine requests, and excluded weekends, so the results may not hold
+  for complex technical cases; connects the agents' concern about routing
+  difficult cases to that gap in the evidence; weighs the higher operating
+  cost against a customer-satisfaction benefit that was assumed rather than
+  measured; considers the strongest argument against the chosen approach (for
+  example, the cost of delaying a faster system); and identifies what new
+  information, such as a pilot that includes complex-case teams and weekends,
+  reopen rates by request type, or measured customer satisfaction, could
+  change the decision. The learner does not need to address every factor; a
+  well-reasoned account that applies several of them is sufficient.

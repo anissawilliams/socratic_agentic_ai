@@ -29,6 +29,7 @@ COHORT_GROUPS = {
     "gsu_2026_fall_late": "GSU hotel",
     "gsu_invoice_2026_fall": "GSU invoice",
     "gsu_invoice_late": "GSU invoice",
+    "germany_2026_fall": "Germany",  # rename if the enrollment uses another cohort code
 }
 
 # Whole cohorts left out of analysis, with the reason.
@@ -201,7 +202,7 @@ class Study:
         return means.round(2)
 
     def survey_text(self) -> pd.DataFrame:
-        cols = [c for c in ["group", "condition", "primary_language_clean", "open_response", "open_response_2"] if c in self.survey]
+        cols = [c for c in ["group", "condition", "open_response", "open_response_2"] if c in self.survey]
         return self.survey[cols].sort_values(["group", "condition"]).reset_index(drop=True)
 
     def demographics_summary(self) -> pd.DataFrame:
@@ -218,6 +219,8 @@ class Study:
                 "age_missing": int(age.isna().sum()),
                 **{f"gender_{k}": v for k, v in part["gender_code"].value_counts().items()},
                 **{f"level_{k}": v for k, v in part.get("academic_level_code", pd.Series(dtype=str)).value_counts().items()},
+                **({"language_answered": int((part["primary_language_clean"] != "").sum())}
+                   if "primary_language_clean" in part else {}),
             })
         return pd.DataFrame(rows).set_index("group").fillna(0)
 
@@ -521,14 +524,16 @@ def load_study(data_dir: str | Path, excludes_file: str | Path = EXCLUDES_FILE) 
     attempts["answer_words"] = attempts["id"].map(answers.groupby("assessment_attempt_id")["words"].sum()).fillna(0)
 
     survey = tag(read("survey_response"))
-    if "primary_language" in survey:
-        survey["primary_language_clean"] = survey["primary_language"].map(normalize_language)
-        survey["english_primary"] = survey["primary_language_clean"].str.split("; ").str[0].eq("English")
-        survey.loc[survey["primary_language_clean"] == "", "english_primary"] = pd.NA
+
 
     demographics = read("demographic_response")
     if not demographics.empty:
         demographics = demographics[demographics["study_subject_id"].isin(real)]
         demographics = tag(demographics)
+        if "primary_language" in demographics:
+            # Asked from 2026-11-20 only; earlier cohorts have no answer (blank).
+            demographics["primary_language_clean"] = demographics["primary_language"].map(normalize_language)
+            first = demographics["primary_language_clean"].str.split("; ").str[0]
+            demographics["english_primary"] = first.eq("English").where(first != "", pd.NA)
 
     return Study(part, sessions, turns, attempts, answers, survey, demographics, unmapped)
